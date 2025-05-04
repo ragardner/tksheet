@@ -285,9 +285,11 @@
 </ul>
 </li>
 <li><a href="#scrollbar-appearance">Scrollbar Appearance</a></li>
+<li><a href="#alternate-row-colors">Alternate Row Colors</a></li>
+<li><a href="#refreshing-the-sheet">Refreshing the sheet</a></li>
 </ul>
 </li>
-<li><a href="#alternate-row-colors">Alternate Row Colors</a></li>
+<li><a href="#sheet-options">Sheet Options</a></li>
 <li><a href="#header-and-index">Header and Index</a><ul>
 <li><a href="#set-the-header">Set the header</a></li>
 <li><a href="#set-the-index">Set the index</a></li>
@@ -378,6 +380,7 @@
 <li><a href="#overwriting-the-table">Overwriting the table</a></li>
 <li><a href="#reset-all-or-specific-sheet-elements-and-attributes">Reset all or specific sheet elements and attributes</a></li>
 <li><a href="#modifying-sheet-data">Modifying sheet data</a></li>
+<li><a href="#managing-the-undo-and-redo-stacks">Managing the undo and redo stacks</a></li>
 <li><a href="#sheet-set-data-function">Sheet set data function</a></li>
 <li><a href="#insert-a-row-into-the-sheet">Insert a row into the sheet</a></li>
 <li><a href="#insert-a-column-into-the-sheet">Insert a column into the sheet</a></li>
@@ -487,6 +490,7 @@
 <li><a href="#get-table-cell-properties">Get table cell properties</a></li>
 <li><a href="#get-index-cell-properties">Get index cell properties</a></li>
 <li><a href="#get-header-cell-properties">Get header cell properties</a></li>
+<li><a href="#other-properties-functions">Other properties functions</a></li>
 </ul>
 </li>
 <li><a href="#getting-selected-cells">Getting Selected Cells</a><ul>
@@ -599,7 +603,6 @@
 <li><a href="#unbind-additional-text-editors-bindings-set-using-the-above-function">Unbind additional text editors bindings set using the above function</a></li>
 </ul>
 </li>
-<li><a href="#sheet-options-and-other-functions">Sheet Options and Other Functions</a></li>
 <li><a href="#treeview-mode">Treeview Mode</a><ul>
 <li><a href="#to-note">TO NOTE:</a></li>
 <li><a href="#creating-a-treeview-mode-sheet">Creating a treeview mode sheet</a></li>
@@ -1143,13 +1146,13 @@ app.mainloop()
 <li>Only set <code>show_top_left</code> to <code>True</code> if you want to always show the top left rectangle of the sheet. Leave as <code>None</code> to only show it when both the index and header are showing.</li>
 <li>For help with <code>treeview</code> mode see <a href="#treeview-mode">here</a>.</li>
 </ul>
-<p>You can change most of these settings after initialization using the <a href="#sheet-options-and-other-functions"><code>set_options()</code> function</a>.
+<p>You can change most of these settings after initialization using the <a href="#sheet-options"><code>set_options()</code> function</a>.
 - <code>scrollbar_theme_inheritance</code> and <code>scrollbar_show_arrows</code> will only work on <code>Sheet()</code> initialization, not with <code>set_options()</code></p>
 <hr />
 <h1 id="sheet-appearance"><strong>Sheet Appearance</strong></h1>
 <h3 id="sheet-colors"><strong>Sheet Colors</strong></h3>
 <p>To change the colors of individual cells, rows or columns use the functions listed under <a href="#highlighting-cells">highlighting cells</a>.</p>
-<p>For the colors of specific parts of the table such as gridlines and backgrounds use the function <code>set_options()</code>, keyword arguments specific to sheet colors are listed below. All the other <code>set_options()</code> arguments can be found <a href="#sheet-options-and-other-functions">here</a>.</p>
+<p>For the colors of specific parts of the table such as gridlines and backgrounds use the function <code>set_options()</code>, keyword arguments specific to sheet colors are listed below. All the other <code>set_options()</code> arguments can be found <a href="#sheet-options">here</a>.</p>
 <p>Use a tkinter color or a hex string e.g.</p>
 <pre><code class="language-python">my_sheet_widget.set_options(table_bg=&quot;black&quot;)
 my_sheet_widget.set_options(table_bg=&quot;#000000&quot;)
@@ -1264,8 +1267,7 @@ horizontal_scroll_pressed_fg
 </ul>
 </li>
 </ul>
-<hr />
-<h1 id="alternate-row-colors"><strong>Alternate Row Colors</strong></h1>
+<h3 id="alternate-row-colors"><strong>Alternate Row Colors</strong></h3>
 <p>For basic alternate row colors in the main table either:</p>
 <ul>
 <li>Use the <code>Sheet()</code> initialization keyword argument <code>alternate_color</code> (<code>str</code>) or</li>
@@ -1277,6 +1279,470 @@ horizontal_scroll_pressed_fg
 <pre><code class="language-python">my_sheet = Sheet(parent, alternate_color=&quot;gray80&quot;)
 </code></pre>
 <p>Note that any cell, row or column highlights will display over alternate row colors.</p>
+<h3 id="refreshing-the-sheet"><strong>Refreshing the sheet</strong></h3>
+<p>Refresh the table.</p>
+<pre><code class="language-python">refresh(redraw_header: bool = True, redraw_row_index: bool = True) -&gt; Sheet
+</code></pre>
+<hr />
+<p>Refresh the table.</p>
+<pre><code class="language-python">redraw(redraw_header: bool = True, redraw_row_index: bool = True) -&gt; Sheet
+</code></pre>
+<hr />
+<p>Refresh after idle (prevents multiple redraws).</p>
+<pre><code class="language-python">set_refresh_timer(
+    redraw: bool = True,
+    index: bool = True,
+    header: bool = True,
+) -&gt; Sheet
+</code></pre>
+<hr />
+<h1 id="sheet-options"><strong>Sheet Options</strong></h1>
+<pre><code class="language-python">set_options(redraw: bool = True, **kwargs) -&gt; Sheet
+</code></pre>
+<p>Key word arguments available for <code>set_options()</code> (values are defaults):</p>
+<pre><code class="language-python">&quot;popup_menu_fg&quot;: &quot;#000000&quot;,
+&quot;popup_menu_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;popup_menu_highlight_bg&quot;: &quot;#DCDEE0&quot;,
+&quot;popup_menu_highlight_fg&quot;: &quot;#000000&quot;,
+&quot;index_hidden_rows_expander_bg&quot;: &quot;#747775&quot;,
+&quot;header_hidden_columns_expander_bg&quot;: &quot;#747775&quot;,
+&quot;header_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;header_border_fg&quot;: &quot;#C4C7C5&quot;,
+&quot;header_grid_fg&quot;: &quot;#C4C7C5&quot;,
+&quot;header_fg&quot;: &quot;#444746&quot;,
+&quot;header_editor_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;header_editor_fg&quot;: &quot;#444746&quot;,
+&quot;header_editor_select_bg&quot;: &quot;#cfd1d1&quot;,
+&quot;header_editor_select_fg&quot;: &quot;#000000&quot;,
+&quot;header_selected_cells_bg&quot;: &quot;#D3E3FD&quot;,
+&quot;header_selected_cells_fg&quot;: &quot;black&quot;,
+&quot;index_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;index_border_fg&quot;: &quot;#C4C7C5&quot;,
+&quot;index_grid_fg&quot;: &quot;#C4C7C5&quot;,
+&quot;index_fg&quot;: &quot;black&quot;,
+&quot;index_editor_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;index_editor_fg&quot;: &quot;black&quot;,
+&quot;index_editor_select_bg&quot;: &quot;#cfd1d1&quot;,
+&quot;index_editor_select_fg&quot;: &quot;#000000&quot;,
+&quot;index_selected_cells_bg&quot;: &quot;#D3E3FD&quot;,
+&quot;index_selected_cells_fg&quot;: &quot;black&quot;,
+&quot;top_left_bg&quot;: &quot;#F9FBFD&quot;,
+&quot;top_left_fg&quot;: &quot;#d9d9d9&quot;,
+&quot;top_left_fg_highlight&quot;: &quot;#747775&quot;,
+&quot;table_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;table_grid_fg&quot;: &quot;#E1E1E1&quot;,
+&quot;table_fg&quot;: &quot;black&quot;,
+&quot;table_editor_bg&quot;: &quot;#FFFFFF&quot;,
+&quot;table_editor_fg&quot;: &quot;black&quot;,
+&quot;table_editor_select_bg&quot;: &quot;#cfd1d1&quot;,
+&quot;table_editor_select_fg&quot;: &quot;#000000&quot;,
+&quot;table_selected_box_cells_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_box_rows_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_box_columns_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_cells_border_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_cells_bg&quot;: &quot;#E6EFFD&quot;,
+&quot;table_selected_cells_fg&quot;: &quot;black&quot;,
+&quot;resizing_line_fg&quot;: &quot;black&quot;,
+&quot;drag_and_drop_bg&quot;: &quot;#0B57D0&quot;,
+&quot;outline_color&quot;: &quot;gray2&quot;,
+&quot;header_selected_columns_bg&quot;: &quot;#0B57D0&quot;,
+&quot;header_selected_columns_fg&quot;: &quot;#FFFFFF&quot;,
+&quot;index_selected_rows_bg&quot;: &quot;#0B57D0&quot;,
+&quot;index_selected_rows_fg&quot;: &quot;#FFFFFF&quot;,
+&quot;table_selected_rows_border_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_rows_bg&quot;: &quot;#E6EFFD&quot;,
+&quot;table_selected_rows_fg&quot;: &quot;black&quot;,
+&quot;table_selected_columns_border_fg&quot;: &quot;#0B57D0&quot;,
+&quot;table_selected_columns_bg&quot;: &quot;#E6EFFD&quot;,
+&quot;table_selected_columns_fg&quot;: &quot;black&quot;,
+&quot;tree_arrow_fg&quot;: &quot;black&quot;,
+&quot;selected_cells_tree_arrow_fg&quot;: &quot;black&quot;,
+&quot;selected_rows_tree_arrow_fg&quot;: &quot;#FFFFFF&quot;,
+&quot;vertical_scroll_background&quot;: &quot;#FFFFFF&quot;,
+&quot;horizontal_scroll_background&quot;: &quot;#FFFFFF&quot;,
+&quot;vertical_scroll_troughcolor&quot;: &quot;#f9fbfd&quot;,
+&quot;horizontal_scroll_troughcolor&quot;: &quot;#f9fbfd&quot;,
+&quot;vertical_scroll_lightcolor&quot;: &quot;#FFFFFF&quot;,
+&quot;horizontal_scroll_lightcolor&quot;: &quot;#FFFFFF&quot;,
+&quot;vertical_scroll_darkcolor&quot;: &quot;gray50&quot;,
+&quot;horizontal_scroll_darkcolor&quot;: &quot;gray50&quot;,
+&quot;vertical_scroll_relief&quot;: &quot;flat&quot;,
+&quot;horizontal_scroll_relief&quot;: &quot;flat&quot;,
+&quot;vertical_scroll_troughrelief&quot;: &quot;flat&quot;,
+&quot;horizontal_scroll_troughrelief&quot;: &quot;flat&quot;,
+&quot;vertical_scroll_bordercolor&quot;: &quot;#f9fbfd&quot;,
+&quot;horizontal_scroll_bordercolor&quot;: &quot;#f9fbfd&quot;,
+&quot;vertical_scroll_active_bg&quot;: &quot;#bdc1c6&quot;,
+&quot;horizontal_scroll_active_bg&quot;: &quot;#bdc1c6&quot;,
+&quot;vertical_scroll_not_active_bg&quot;: &quot;#DADCE0&quot;,
+&quot;horizontal_scroll_not_active_bg&quot;: &quot;#DADCE0&quot;,
+&quot;vertical_scroll_pressed_bg&quot;: &quot;#bdc1c6&quot;,
+&quot;horizontal_scroll_pressed_bg&quot;: &quot;#bdc1c6&quot;,
+&quot;vertical_scroll_active_fg&quot;: &quot;#bdc1c6&quot;,
+&quot;horizontal_scroll_active_fg&quot;: &quot;#bdc1c6&quot;,
+&quot;vertical_scroll_not_active_fg&quot;: &quot;#DADCE0&quot;,
+&quot;horizontal_scroll_not_active_fg&quot;: &quot;#DADCE0&quot;,
+&quot;vertical_scroll_pressed_fg&quot;: &quot;#bdc1c6&quot;,
+&quot;horizontal_scroll_pressed_fg&quot;: &quot;#bdc1c6&quot;,
+&quot;popup_menu_font&quot;: FontTuple(
+    &quot;Calibri&quot;,
+    13 if USER_OS == &quot;darwin&quot; else 11,
+    &quot;normal&quot;,
+),
+&quot;table_font&quot;: FontTuple(
+    &quot;Calibri&quot;,
+    13 if USER_OS == &quot;darwin&quot; else 11,
+    &quot;normal&quot;,
+),
+&quot;header_font&quot;: FontTuple(
+    &quot;Calibri&quot;,
+    13 if USER_OS == &quot;darwin&quot; else 11,
+    &quot;normal&quot;,
+),
+&quot;index_font&quot;: FontTuple(
+    &quot;Calibri&quot;,
+    13 if USER_OS == &quot;darwin&quot; else 11,
+    &quot;normal&quot;,
+),
+# edit header
+&quot;edit_header_label&quot;: &quot;Edit header&quot;,
+&quot;edit_header_accelerator&quot;: &quot;&quot;,
+&quot;edit_header_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_header_compound&quot;: &quot;left&quot;,
+# edit index
+&quot;edit_index_label&quot;: &quot;Edit index&quot;,
+&quot;edit_index_accelerator&quot;: &quot;&quot;,
+&quot;edit_index_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_index_compound&quot;: &quot;left&quot;,
+# edit cell
+&quot;edit_cell_label&quot;: &quot;Edit cell&quot;,
+&quot;edit_cell_accelerator&quot;: &quot;&quot;,
+&quot;edit_cell_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_cell_compound&quot;: &quot;left&quot;,
+# cut
+&quot;cut_label&quot;: &quot;Cut&quot;,
+&quot;cut_accelerator&quot;: &quot;Ctrl+X&quot;,
+&quot;cut_image&quot;: tk.PhotoImage(data=ICON_CUT),
+&quot;cut_compound&quot;: &quot;left&quot;,
+# cut contents
+&quot;cut_contents_label&quot;: &quot;Cut contents&quot;,
+&quot;cut_contents_accelerator&quot;: &quot;Ctrl+X&quot;,
+&quot;cut_contents_image&quot;: tk.PhotoImage(data=ICON_CUT),
+&quot;cut_contents_compound&quot;: &quot;left&quot;,
+# copy
+&quot;copy_label&quot;: &quot;Copy&quot;,
+&quot;copy_accelerator&quot;: &quot;Ctrl+C&quot;,
+&quot;copy_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_compound&quot;: &quot;left&quot;,
+# copy contents
+&quot;copy_contents_label&quot;: &quot;Copy contents&quot;,
+&quot;copy_contents_accelerator&quot;: &quot;Ctrl+C&quot;,
+&quot;copy_contents_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_contents_compound&quot;: &quot;left&quot;,
+# paste
+&quot;paste_label&quot;: &quot;Paste&quot;,
+&quot;paste_accelerator&quot;: &quot;Ctrl+V&quot;,
+&quot;paste_image&quot;: tk.PhotoImage(data=ICON_PASTE),
+&quot;paste_compound&quot;: &quot;left&quot;,
+# delete
+&quot;delete_label&quot;: &quot;Delete&quot;,
+&quot;delete_accelerator&quot;: &quot;Del&quot;,
+&quot;delete_image&quot;: tk.PhotoImage(data=ICON_CLEAR),
+&quot;delete_compound&quot;: &quot;left&quot;,
+# clear contents
+&quot;clear_contents_label&quot;: &quot;Clear contents&quot;,
+&quot;clear_contents_accelerator&quot;: &quot;Del&quot;,
+&quot;clear_contents_image&quot;: tk.PhotoImage(data=ICON_CLEAR),
+&quot;clear_contents_compound&quot;: &quot;left&quot;,
+# del columns
+&quot;delete_columns_label&quot;: &quot;Delete columns&quot;,
+&quot;delete_columns_accelerator&quot;: &quot;&quot;,
+&quot;delete_columns_image&quot;: tk.PhotoImage(data=ICON_DEL),
+&quot;delete_columns_compound&quot;: &quot;left&quot;,
+# insert columns left
+&quot;insert_columns_left_label&quot;: &quot;Insert columns left&quot;,
+&quot;insert_columns_left_accelerator&quot;: &quot;&quot;,
+&quot;insert_columns_left_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_columns_left_compound&quot;: &quot;left&quot;,
+# insert columns right
+&quot;insert_columns_right_label&quot;: &quot;Insert columns right&quot;,
+&quot;insert_columns_right_accelerator&quot;: &quot;&quot;,
+&quot;insert_columns_right_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_columns_right_compound&quot;: &quot;left&quot;,
+# insert single column
+&quot;insert_column_label&quot;: &quot;Insert column&quot;,
+&quot;insert_column_accelerator&quot;: &quot;&quot;,
+&quot;insert_column_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_column_compound&quot;: &quot;left&quot;,
+# del rows
+&quot;delete_rows_label&quot;: &quot;Delete rows&quot;,
+&quot;delete_rows_accelerator&quot;: &quot;&quot;,
+&quot;delete_rows_image&quot;: tk.PhotoImage(data=ICON_DEL),
+&quot;delete_rows_compound&quot;: &quot;left&quot;,
+# insert rows above
+&quot;insert_rows_above_label&quot;: &quot;Insert rows above&quot;,
+&quot;insert_rows_above_accelerator&quot;: &quot;&quot;,
+&quot;insert_rows_above_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_rows_above_compound&quot;: &quot;left&quot;,
+# insert rows below
+&quot;insert_rows_below_label&quot;: &quot;Insert rows below&quot;,
+&quot;insert_rows_below_accelerator&quot;: &quot;&quot;,
+&quot;insert_rows_below_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_rows_below_compound&quot;: &quot;left&quot;,
+# insert single row
+&quot;insert_row_label&quot;: &quot;Insert row&quot;,
+&quot;insert_row_accelerator&quot;: &quot;&quot;,
+&quot;insert_row_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_row_compound&quot;: &quot;left&quot;,
+# sorting
+# labels
+&quot;sort_cells_label&quot;: &quot;Sort Asc.&quot;,
+&quot;sort_cells_x_label&quot;: &quot;Sort row-wise Asc.&quot;,
+&quot;sort_row_label&quot;: &quot;Sort values Asc.&quot;,
+&quot;sort_column_label&quot;: &quot;Sort values Asc.&quot;,
+&quot;sort_rows_label&quot;: &quot;Sort rows Asc.&quot;,
+&quot;sort_columns_label&quot;: &quot;Sort columns Asc.&quot;,
+# reverse labels
+&quot;sort_cells_reverse_label&quot;: &quot;Sort Desc.&quot;,
+&quot;sort_cells_x_reverse_label&quot;: &quot;Sort row-wise Desc.&quot;,
+&quot;sort_row_reverse_label&quot;: &quot;Sort values Desc.&quot;,
+&quot;sort_column_reverse_label&quot;: &quot;Sort values Desc.&quot;,
+&quot;sort_rows_reverse_label&quot;: &quot;Sort rows Desc.&quot;,
+&quot;sort_columns_reverse_label&quot;: &quot;Sort columns Desc.&quot;,
+# accelerators
+&quot;sort_cells_accelerator&quot;: &quot;&quot;,
+&quot;sort_cells_x_accelerator&quot;: &quot;&quot;,
+&quot;sort_row_accelerator&quot;: &quot;&quot;,
+&quot;sort_column_accelerator&quot;: &quot;&quot;,
+&quot;sort_rows_accelerator&quot;: &quot;&quot;,
+&quot;sort_columns_accelerator&quot;: &quot;&quot;,
+# reverse accelerators
+&quot;sort_cells_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_cells_x_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_row_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_column_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_rows_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_columns_reverse_accelerator&quot;: &quot;&quot;,
+# images
+&quot;sort_cells_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_cells_x_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_row_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_column_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_rows_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_columns_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+# compounds
+&quot;sort_cells_compound&quot;: &quot;left&quot;,
+&quot;sort_cells_x_compound&quot;: &quot;left&quot;,
+&quot;sort_row_compound&quot;: &quot;left&quot;,
+&quot;sort_column_compound&quot;: &quot;left&quot;,
+&quot;sort_rows_compound&quot;: &quot;left&quot;,
+&quot;sort_columns_compound&quot;: &quot;left&quot;,
+# reverse images
+&quot;sort_cells_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_cells_x_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_row_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_column_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_rows_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_columns_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+# reverse compounds
+&quot;sort_cells_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_cells_x_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_row_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_column_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_rows_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_columns_reverse_compound&quot;: &quot;left&quot;,
+# select all
+&quot;select_all_label&quot;: &quot;Select all&quot;,
+&quot;select_all_accelerator&quot;: &quot;Ctrl+A&quot;,
+&quot;select_all_image&quot;: tk.PhotoImage(data=ICON_SELECT_ALL),
+&quot;select_all_compound&quot;: &quot;left&quot;,
+# undo
+&quot;undo_label&quot;: &quot;Undo&quot;,
+&quot;undo_accelerator&quot;: &quot;Ctrl+Z&quot;,
+&quot;undo_image&quot;: tk.PhotoImage(data=ICON_UNDO),
+&quot;undo_compound&quot;: &quot;left&quot;,
+# redo
+&quot;redo_label&quot;: &quot;Redo&quot;,
+&quot;redo_accelerator&quot;: &quot;Ctrl+Shift+Z&quot;,
+&quot;redo_image&quot;: tk.PhotoImage(data=ICON_REDO),
+&quot;redo_compound&quot;: &quot;left&quot;,
+# bindings
+&quot;copy_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-c&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-C&gt;&quot;,
+],
+&quot;cut_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-x&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-X&gt;&quot;,
+],
+&quot;paste_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-v&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-V&gt;&quot;,
+],
+&quot;undo_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-z&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-Z&gt;&quot;,
+],
+&quot;redo_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-Shift-z&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-Shift-Z&gt;&quot;,
+],
+&quot;delete_bindings&quot;: [
+    &quot;&lt;Delete&gt;&quot;,
+],
+&quot;select_all_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-a&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-A&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-Shift-space&gt;&quot;,
+],
+&quot;select_columns_bindings&quot;: [
+    &quot;&lt;Control-space&gt;&quot;,
+],
+&quot;select_rows_bindings&quot;: [
+    &quot;&lt;Shift-space&gt;&quot;,
+],
+&quot;row_start_bindings&quot;: [
+    &quot;&lt;Command-Left&gt;&quot;,
+    &quot;&lt;Home&gt;&quot;,
+]
+if USER_OS == &quot;darwin&quot;
+else [&quot;&lt;Home&gt;&quot;],
+&quot;table_start_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-Home&gt;&quot;,
+],
+&quot;tab_bindings&quot;: [
+    &quot;&lt;Tab&gt;&quot;,
+],
+&quot;up_bindings&quot;: [
+    &quot;&lt;Up&gt;&quot;,
+],
+&quot;right_bindings&quot;: [
+    &quot;&lt;Right&gt;&quot;,
+],
+&quot;down_bindings&quot;: [
+    &quot;&lt;Down&gt;&quot;,
+],
+&quot;left_bindings&quot;: [
+    &quot;&lt;Left&gt;&quot;,
+],
+&quot;shift_up_bindings&quot;: [
+    &quot;&lt;Shift-Up&gt;&quot;,
+],
+&quot;shift_right_bindings&quot;: [
+    &quot;&lt;Shift-Right&gt;&quot;,
+],
+&quot;shift_down_bindings&quot;: [
+    &quot;&lt;Shift-Down&gt;&quot;,
+],
+&quot;shift_left_bindings&quot;: [
+    &quot;&lt;Shift-Left&gt;&quot;,
+],
+&quot;prior_bindings&quot;: [
+    &quot;&lt;Prior&gt;&quot;,
+],
+&quot;next_bindings&quot;: [
+    &quot;&lt;Next&gt;&quot;,
+],
+&quot;find_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-f&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-F&gt;&quot;,
+],
+&quot;find_next_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-g&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-G&gt;&quot;,
+],
+&quot;find_previous_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-Shift-g&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-Shift-G&gt;&quot;,
+],
+&quot;toggle_replace_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-h&gt;&quot;,
+    f&quot;&lt;{ctrl_key}-H&gt;&quot;,
+],
+&quot;escape_bindings&quot;: [
+    &quot;&lt;Escape&gt;&quot;,
+],
+# other
+&quot;vertical_scroll_borderwidth&quot;: 1,
+&quot;horizontal_scroll_borderwidth&quot;: 1,
+&quot;vertical_scroll_gripcount&quot;: 0,
+&quot;horizontal_scroll_gripcount&quot;: 0,
+&quot;vertical_scroll_arrowsize&quot;: &quot;&quot;,
+&quot;horizontal_scroll_arrowsize&quot;: &quot;&quot;,
+&quot;set_cell_sizes_on_zoom&quot;: False,
+&quot;auto_resize_columns&quot;: None,
+&quot;auto_resize_rows&quot;: None,
+&quot;to_clipboard_delimiter&quot;: &quot;\t&quot;,
+&quot;to_clipboard_quotechar&quot;: '&quot;',
+&quot;to_clipboard_lineterminator&quot;: &quot;\n&quot;,
+&quot;from_clipboard_delimiters&quot;: [&quot;\t&quot;],
+&quot;show_dropdown_borders&quot;: False,
+&quot;show_default_header_for_empty&quot;: True,
+&quot;show_default_index_for_empty&quot;: True,
+&quot;default_header_height&quot;: &quot;1&quot;,
+&quot;default_row_height&quot;: &quot;1&quot;,
+&quot;default_column_width&quot;: 120,
+&quot;default_row_index_width&quot;: 70,
+&quot;default_row_index&quot;: &quot;numbers&quot;,
+&quot;default_header&quot;: &quot;letters&quot;,
+&quot;page_up_down_select_row&quot;: True,
+&quot;paste_can_expand_x&quot;: False,
+&quot;paste_can_expand_y&quot;: False,
+&quot;paste_insert_column_limit&quot;: None,
+&quot;paste_insert_row_limit&quot;: None,
+&quot;arrow_key_down_right_scroll_page&quot;: False,
+&quot;cell_auto_resize_enabled&quot;: True,
+&quot;auto_resize_row_index&quot;: True,
+&quot;max_undos&quot;: 30,
+&quot;column_drag_and_drop_perform&quot;: True,
+&quot;row_drag_and_drop_perform&quot;: True,
+&quot;empty_horizontal&quot;: 50,
+&quot;empty_vertical&quot;: 50,
+&quot;selected_rows_to_end_of_window&quot;: False,
+&quot;horizontal_grid_to_end_of_window&quot;: False,
+&quot;vertical_grid_to_end_of_window&quot;: False,
+&quot;show_vertical_grid&quot;: True,
+&quot;show_horizontal_grid&quot;: True,
+&quot;display_selected_fg_over_highlights&quot;: False,
+&quot;show_selected_cells_border&quot;: True,
+&quot;edit_cell_tab&quot;: &quot;right&quot;,
+&quot;edit_cell_return&quot;: &quot;down&quot;,
+&quot;editor_del_key&quot;: &quot;forward&quot;,
+&quot;treeview&quot;: False,
+&quot;treeview_indent&quot;: &quot;2&quot;,
+&quot;rounded_boxes&quot;: True,
+&quot;alternate_color&quot;: &quot;&quot;,
+&quot;allow_cell_overflow&quot;: False,
+&quot;table_wrap&quot;: &quot;c&quot;,
+&quot;header_wrap&quot;: &quot;c&quot;,
+&quot;index_wrap&quot;: &quot;c&quot;,
+&quot;min_column_width&quot;: 1,
+&quot;max_column_width&quot;: float(&quot;inf&quot;),
+&quot;max_header_height&quot;: float(&quot;inf&quot;),
+&quot;max_row_height&quot;: float(&quot;inf&quot;),
+&quot;max_index_width&quot;: float(&quot;inf&quot;),
+&quot;show_top_left&quot;: None,
+&quot;sort_key&quot;: natural_sort_key,
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>The parameters ending in <code>_image</code> take <code>tk.PhotoImage</code> or an empty string <code>""</code> as types.</li>
+<li>The parameters ending in <code>_compound</code> take one of the following: <code>"left", "right", "bottom", "top", "none", None</code>.</li>
+<li><code>sort_key</code> is <code>Callable</code> - a function.</li>
+<li>A dictionary can be provided to <code>set_options()</code> instead of using the keyword arguments, e.g.:</li>
+</ul>
+<pre><code class="language-python">kwargs = {
+    &quot;copy_bindings&quot;: [
+        &quot;&lt;Control-g&gt;&quot;,
+        &quot;&lt;Control-G&gt;&quot;,
+    ],
+    &quot;cut_bindings&quot;: [
+        &quot;&lt;Control-c&gt;&quot;,
+        &quot;&lt;Control-C&gt;&quot;,
+    ],
+}
+sheet.set_options(**kwargs)
+</code></pre>
 <hr />
 <h1 id="header-and-index"><strong>Header and Index</strong></h1>
 <h4 id="set-the-header"><strong>Set the header</strong></h4>
@@ -1878,7 +2344,22 @@ app.mainloop()
     index_menu: bool = True,
     header_menu: bool = True,
     empty_space_menu: bool = True,
+    image: tk.PhotoImage | Literal[&quot;&quot;] = &quot;&quot;,
+    compound: Literal[&quot;top&quot;, &quot;bottom&quot;, &quot;left&quot;, &quot;right&quot;, &quot;none&quot;] | None = None,
+    accelerator: str | None = None,
 ) -&gt; Sheet
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>Either creates or overwrites an existing menu command.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-python">self.sheet.popup_menu_add_command(
+    label=&quot;Test insert rows&quot;,
+    func=self.my_fn,
+    image=tk.PhotoImage(file=&quot;filepath_to_img.png&quot;),
+    compound=&quot;left&quot;,
+)
 </code></pre>
 <hr />
 <h4 id="remove-commands-added-using-popup_menu_add_command-from-the-in-built-right-click-popup-menu"><strong>Remove commands added using popup_menu_add_command from the in-built right click popup menu</strong></h4>
@@ -2045,79 +2526,176 @@ self.sheet.bind(&quot;&lt;&lt;SheetModified&gt;&gt;&quot;, self.sheet_was_modifi
 </ul>
 <p>Please note that due to the limitations of the Tkinter Canvas tksheet doesn’t support right-to-left (RTL) languages.</p>
 <h4 id="changing-right-click-menu-labels"><strong>Changing right click menu labels</strong></h4>
-<p>You can change the labels for tksheets in-built right click popup menu by using the <a href="#sheet-options-and-other-functions"><code>set_options()</code> function</a> with any of the following keyword arguments:</p>
-<pre><code class="language-python">edit_header_label
-edit_header_accelerator
-edit_index_label
-edit_index_accelerator
-edit_cell_label
-edit_cell_accelerator
-cut_label
-cut_accelerator
-cut_contents_label
-cut_contents_accelerator
-copy_label
-copy_accelerator
-copy_contents_label
-copy_contents_accelerator
-paste_label
-paste_accelerator
-delete_label
-delete_accelerator
-clear_contents_label
-clear_contents_accelerator
-delete_columns_label
-delete_columns_accelerator
-insert_columns_left_label
-insert_columns_left_accelerator
-insert_column_label
-insert_column_accelerator
-insert_columns_right_label
-insert_columns_right_accelerator
-delete_rows_label
-delete_rows_accelerator
-insert_rows_above_label
-insert_rows_above_accelerator
-insert_rows_below_label
-insert_rows_below_accelerator
-insert_row_label
-insert_row_accelerator
-select_all_label
-select_all_accelerator
-undo_label
-undo_accelerator
-
-sort_cells_label
-sort_cells_x_label
-sort_row_label
-sort_column_label
-sort_rows_label
-sort_columns_label
-sort_cells_reverse_label
-sort_cells_x_reverse_label
-sort_row_reverse_label
-sort_column_reverse_label
-sort_rows_reverse_label
-sort_columns_reverse_label
-sort_cells_accelerator
-sort_cells_x_accelerator
-sort_row_accelerator
-sort_column_accelerator
-sort_rows_accelerator
-sort_columns_accelerator
-sort_cells_reverse_accelerator
-sort_cells_x_reverse_accelerator
-sort_row_reverse_accelerator
-sort_column_reverse_accelerator
-sort_rows_reverse_accelerator
-sort_columns_reverse_accelerator
+<p>You can change the labels for tksheets in-built right click popup menu by using the <a href="#sheet-options"><code>set_options()</code> function</a> with any of the following keyword arguments:</p>
+<pre><code class="language-python"># edit header
+&quot;edit_header_label&quot;: &quot;Edit header&quot;,
+&quot;edit_header_accelerator&quot;: &quot;&quot;,
+&quot;edit_header_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_header_compound&quot;: &quot;left&quot;,
+# edit index
+&quot;edit_index_label&quot;: &quot;Edit index&quot;,
+&quot;edit_index_accelerator&quot;: &quot;&quot;,
+&quot;edit_index_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_index_compound&quot;: &quot;left&quot;,
+# edit cell
+&quot;edit_cell_label&quot;: &quot;Edit cell&quot;,
+&quot;edit_cell_accelerator&quot;: &quot;&quot;,
+&quot;edit_cell_image&quot;: tk.PhotoImage(data=ICON_EDIT),
+&quot;edit_cell_compound&quot;: &quot;left&quot;,
+# cut
+&quot;cut_label&quot;: &quot;Cut&quot;,
+&quot;cut_accelerator&quot;: &quot;Ctrl+X&quot;,
+&quot;cut_image&quot;: tk.PhotoImage(data=ICON_CUT),
+&quot;cut_compound&quot;: &quot;left&quot;,
+# cut contents
+&quot;cut_contents_label&quot;: &quot;Cut contents&quot;,
+&quot;cut_contents_accelerator&quot;: &quot;Ctrl+X&quot;,
+&quot;cut_contents_image&quot;: tk.PhotoImage(data=ICON_CUT),
+&quot;cut_contents_compound&quot;: &quot;left&quot;,
+# copy
+&quot;copy_label&quot;: &quot;Copy&quot;,
+&quot;copy_accelerator&quot;: &quot;Ctrl+C&quot;,
+&quot;copy_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_compound&quot;: &quot;left&quot;,
+# copy contents
+&quot;copy_contents_label&quot;: &quot;Copy contents&quot;,
+&quot;copy_contents_accelerator&quot;: &quot;Ctrl+C&quot;,
+&quot;copy_contents_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_contents_compound&quot;: &quot;left&quot;,
+# paste
+&quot;paste_label&quot;: &quot;Paste&quot;,
+&quot;paste_accelerator&quot;: &quot;Ctrl+V&quot;,
+&quot;paste_image&quot;: tk.PhotoImage(data=ICON_PASTE),
+&quot;paste_compound&quot;: &quot;left&quot;,
+# delete
+&quot;delete_label&quot;: &quot;Delete&quot;,
+&quot;delete_accelerator&quot;: &quot;Del&quot;,
+&quot;delete_image&quot;: tk.PhotoImage(data=ICON_CLEAR),
+&quot;delete_compound&quot;: &quot;left&quot;,
+# clear contents
+&quot;clear_contents_label&quot;: &quot;Clear contents&quot;,
+&quot;clear_contents_accelerator&quot;: &quot;Del&quot;,
+&quot;clear_contents_image&quot;: tk.PhotoImage(data=ICON_CLEAR),
+&quot;clear_contents_compound&quot;: &quot;left&quot;,
+# del columns
+&quot;delete_columns_label&quot;: &quot;Delete columns&quot;,
+&quot;delete_columns_accelerator&quot;: &quot;&quot;,
+&quot;delete_columns_image&quot;: tk.PhotoImage(data=ICON_DEL),
+&quot;delete_columns_compound&quot;: &quot;left&quot;,
+# insert columns left
+&quot;insert_columns_left_label&quot;: &quot;Insert columns left&quot;,
+&quot;insert_columns_left_accelerator&quot;: &quot;&quot;,
+&quot;insert_columns_left_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_columns_left_compound&quot;: &quot;left&quot;,
+# insert columns right
+&quot;insert_columns_right_label&quot;: &quot;Insert columns right&quot;,
+&quot;insert_columns_right_accelerator&quot;: &quot;&quot;,
+&quot;insert_columns_right_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_columns_right_compound&quot;: &quot;left&quot;,
+# insert single column
+&quot;insert_column_label&quot;: &quot;Insert column&quot;,
+&quot;insert_column_accelerator&quot;: &quot;&quot;,
+&quot;insert_column_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_column_compound&quot;: &quot;left&quot;,
+# del rows
+&quot;delete_rows_label&quot;: &quot;Delete rows&quot;,
+&quot;delete_rows_accelerator&quot;: &quot;&quot;,
+&quot;delete_rows_image&quot;: tk.PhotoImage(data=ICON_DEL),
+&quot;delete_rows_compound&quot;: &quot;left&quot;,
+# insert rows above
+&quot;insert_rows_above_label&quot;: &quot;Insert rows above&quot;,
+&quot;insert_rows_above_accelerator&quot;: &quot;&quot;,
+&quot;insert_rows_above_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_rows_above_compound&quot;: &quot;left&quot;,
+# insert rows below
+&quot;insert_rows_below_label&quot;: &quot;Insert rows below&quot;,
+&quot;insert_rows_below_accelerator&quot;: &quot;&quot;,
+&quot;insert_rows_below_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_rows_below_compound&quot;: &quot;left&quot;,
+# insert single row
+&quot;insert_row_label&quot;: &quot;Insert row&quot;,
+&quot;insert_row_accelerator&quot;: &quot;&quot;,
+&quot;insert_row_image&quot;: tk.PhotoImage(data=ICON_ADD),
+&quot;insert_row_compound&quot;: &quot;left&quot;,
+# sorting
+# labels
+&quot;sort_cells_label&quot;: &quot;Sort Asc.&quot;,
+&quot;sort_cells_x_label&quot;: &quot;Sort row-wise Asc.&quot;,
+&quot;sort_row_label&quot;: &quot;Sort values Asc.&quot;,
+&quot;sort_column_label&quot;: &quot;Sort values Asc.&quot;,
+&quot;sort_rows_label&quot;: &quot;Sort rows Asc.&quot;,
+&quot;sort_columns_label&quot;: &quot;Sort columns Asc.&quot;,
+# reverse labels
+&quot;sort_cells_reverse_label&quot;: &quot;Sort Desc.&quot;,
+&quot;sort_cells_x_reverse_label&quot;: &quot;Sort row-wise Desc.&quot;,
+&quot;sort_row_reverse_label&quot;: &quot;Sort values Desc.&quot;,
+&quot;sort_column_reverse_label&quot;: &quot;Sort values Desc.&quot;,
+&quot;sort_rows_reverse_label&quot;: &quot;Sort rows Desc.&quot;,
+&quot;sort_columns_reverse_label&quot;: &quot;Sort columns Desc.&quot;,
+# accelerators
+&quot;sort_cells_accelerator&quot;: &quot;&quot;,
+&quot;sort_cells_x_accelerator&quot;: &quot;&quot;,
+&quot;sort_row_accelerator&quot;: &quot;&quot;,
+&quot;sort_column_accelerator&quot;: &quot;&quot;,
+&quot;sort_rows_accelerator&quot;: &quot;&quot;,
+&quot;sort_columns_accelerator&quot;: &quot;&quot;,
+# reverse accelerators
+&quot;sort_cells_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_cells_x_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_row_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_column_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_rows_reverse_accelerator&quot;: &quot;&quot;,
+&quot;sort_columns_reverse_accelerator&quot;: &quot;&quot;,
+# images
+&quot;sort_cells_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_cells_x_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_row_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_column_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_rows_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+&quot;sort_columns_image&quot;: tk.PhotoImage(data=ICON_SORT_ASC),
+# compounds
+&quot;sort_cells_compound&quot;: &quot;left&quot;,
+&quot;sort_cells_x_compound&quot;: &quot;left&quot;,
+&quot;sort_row_compound&quot;: &quot;left&quot;,
+&quot;sort_column_compound&quot;: &quot;left&quot;,
+&quot;sort_rows_compound&quot;: &quot;left&quot;,
+&quot;sort_columns_compound&quot;: &quot;left&quot;,
+# reverse images
+&quot;sort_cells_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_cells_x_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_row_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_column_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_rows_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+&quot;sort_columns_reverse_image&quot;: tk.PhotoImage(data=ICON_SORT_DESC),
+# reverse compounds
+&quot;sort_cells_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_cells_x_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_row_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_column_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_rows_reverse_compound&quot;: &quot;left&quot;,
+&quot;sort_columns_reverse_compound&quot;: &quot;left&quot;,
+# select all
+&quot;select_all_label&quot;: &quot;Select all&quot;,
+&quot;select_all_accelerator&quot;: &quot;Ctrl+A&quot;,
+&quot;select_all_image&quot;: tk.PhotoImage(data=ICON_SELECT_ALL),
+&quot;select_all_compound&quot;: &quot;left&quot;,
+# undo
+&quot;undo_label&quot;: &quot;Undo&quot;,
+&quot;undo_accelerator&quot;: &quot;Ctrl+Z&quot;,
+&quot;undo_image&quot;: tk.PhotoImage(data=ICON_UNDO),
+&quot;undo_compound&quot;: &quot;left&quot;,
+# redo
+&quot;redo_label&quot;: &quot;Redo&quot;,
+&quot;redo_accelerator&quot;: &quot;Ctrl+Shift+Z&quot;,
+&quot;redo_image&quot;: tk.PhotoImage(data=ICON_REDO),
+&quot;redo_compound&quot;: &quot;left&quot;,
 </code></pre>
 <p>Example:</p>
 <pre><code class="language-python"># changing the copy label to the spanish for Copy
-sheet.set_options(copy_label=&quot;Copiar&quot;)
+sheet.set_options(copy_label=&quot;Copiar&quot;, copy_image=tk.PhotoImage(file=&quot;filepath_to_img.png&quot;), copy_compound=&quot;left&quot;)
 </code></pre>
 <h4 id="changing-key-bindings"><strong>Changing key bindings</strong></h4>
-<p>You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the <a href="#sheet-options-and-other-functions"><code>set_options()</code> function</a> with any the following keyword arguments:</p>
+<p>You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the <a href="#sheet-options"><code>set_options()</code> function</a> with any the following keyword arguments:</p>
 <pre><code class="language-python">copy_bindings
 cut_bindings
 paste_bindings
@@ -3293,6 +3871,20 @@ self.sheet_span.data = [[&quot;&quot;,  &quot;A&quot;,  &quot;B&quot;,  &quot;C&
                         [&quot;1&quot;, &quot;A1&quot;, &quot;B1&quot;, &quot;C1&quot;],
                         [&quot;2&quot;, &quot;A2&quot;, &quot;B2&quot;, &quot;C2&quot;]]
 </code></pre>
+<hr />
+<h4 id="managing-the-undo-and-redo-stacks"><strong>Managing the undo and redo stacks</strong></h4>
+<pre><code class="language-python"># clears both undos and redos
+reset_undos() -&gt; Sheet
+
+# get the Sheets modifiable deque variables which store changes for undo and redo
+get_undo_stack() -&gt; deque
+get_redo_stack() -&gt; deque
+
+# set the Sheets undo and redo stacks, returns Sheet widget
+set_undo_stack(stack: deque) -&gt; Sheet
+set_redo_stack(stack: deque) -&gt; Sheet
+</code></pre>
+<hr />
 <h4 id="sheet-set-data-function"><strong>Sheet set data function</strong></h4>
 <p>You can also use the <code>Sheet</code> function <code>set_data()</code>.</p>
 <pre><code class="language-python">set_data(
@@ -4895,6 +5487,35 @@ cell_is_readonly = sheet.props(0, &quot;b&quot;, &quot;readonly&quot;)
 </li>
 </ul>
 <hr />
+<h4 id="other-properties-functions"><strong>Other properties functions</strong></h4>
+<p>Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.</p>
+<pre><code class="language-python">get_cell_options(key: None | str = None, canvas: Literal[&quot;table&quot;, &quot;row_index&quot;, &quot;header&quot;] = &quot;table&quot;) -&gt; dict
+</code></pre>
+<hr />
+<p>Get internal storage dictionary of highlights, readonly rows, dropdowns etc. Specifically for row options.</p>
+<pre><code class="language-python">get_row_options(key: None | str = None) -&gt; dict
+</code></pre>
+<hr />
+<p>Get internal storage dictionary of highlights, readonly columns, dropdowns etc. Specifically for column options.</p>
+<pre><code class="language-python">get_column_options(key: None | str = None) -&gt; dict
+</code></pre>
+<hr />
+<p>Get internal storage dictionary of highlights, readonly header cells, dropdowns etc. Specifically for header options.</p>
+<pre><code class="language-python">get_header_options(key: None | str = None) -&gt; dict
+</code></pre>
+<hr />
+<p>Get internal storage dictionary of highlights, readonly row index cells, dropdowns etc. Specifically for row index options.</p>
+<pre><code class="language-python">get_index_options(key: None | str = None) -&gt; dict
+</code></pre>
+<hr />
+<p>Delete any formats, alignments, dropdown boxes, check boxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.</p>
+<pre><code class="language-python">del_out_of_bounds_options() -&gt; Sheet
+</code></pre>
+<hr />
+<p>Delete all alignments, dropdown boxes, check boxes, highlights etc.</p>
+<pre><code class="language-python">reset_all_options() -&gt; Sheet
+</code></pre>
+<hr />
 <h1 id="getting-selected-cells"><strong>Getting Selected Cells</strong></h1>
 <p>All selected cell/box getting functions return or generate <strong>displayed</strong> cell coordinates.</p>
 <ul>
@@ -5377,7 +5998,7 @@ set_options(auto_resize_rows=30)
 <pre><code class="language-python">set_index_width(pixels: int, redraw: bool = True) -&gt; Sheet
 </code></pre>
 <ul>
-<li>Note that it disables auto resizing of index. Use <a href="#sheet-options-and-other-functions"><code>set_options()</code></a> to restore auto resizing.</li>
+<li>Note that it disables auto resizing of index. Use <a href="#sheet-options"><code>set_options()</code></a> to restore auto resizing.</li>
 </ul>
 <hr />
 <h4 id="set-the-height-of-the-header-to-a-str-or-existing-values"><strong>Set the height of the header to a str or existing values</strong></h4>
@@ -5990,311 +6611,6 @@ If both arguments are <code>None</code> then table will reset to default tkinter
 <pre><code class="language-python">unbind_key_text_editor(key: str) -&gt; Sheet
 </code></pre>
 <hr />
-<h1 id="sheet-options-and-other-functions"><strong>Sheet Options and Other Functions</strong></h1>
-<pre><code class="language-python">set_options(redraw: bool = True, **kwargs) -&gt; Sheet
-</code></pre>
-<p>The list of key word arguments available for <code>set_options()</code> are as follows, <a href="#initialization-options">see here</a> as a guide for argument types.</p>
-<pre><code class="language-python">name
-
-show_top_left
-
-sort_key
-edit_cell_tab
-edit_cell_return
-editor_del_key
-auto_resize_columns
-auto_resize_rows
-to_clipboard_delimiter
-to_clipboard_quotechar
-to_clipboard_lineterminator
-from_clipboard_delimiters
-show_dropdown_borders
-show_default_header_for_empty
-show_default_index_for_empty
-selected_rows_to_end_of_window
-horizontal_grid_to_end_of_window
-vertical_grid_to_end_of_window
-paste_insert_column_limit
-paste_insert_row_limit
-paste_can_expand_x
-paste_can_expand_y
-arrow_key_down_right_scroll_page
-enable_edit_cell_auto_resize
-page_up_down_select_row
-display_selected_fg_over_highlights
-show_horizontal_grid
-show_vertical_grid
-empty_horizontal
-empty_vertical
-default_row_height
-default_column_width
-default_header_height
-default_row_index_width
-row_drag_and_drop_perform
-column_drag_and_drop_perform
-auto_resize_default_row_index
-default_header
-default_row_index
-min_column_width
-max_column_width
-max_row_height
-max_header_height
-max_index_width
-font
-header_font
-index_font
-
-show_selected_cells_border
-theme
-top_left_bg
-top_left_fg
-top_left_fg_highlight
-
-table_bg
-table_grid_fg
-table_fg
-table_selected_box_cells_fg
-table_selected_box_rows_fg
-table_selected_box_columns_fg
-table_selected_cells_border_fg
-table_selected_cells_bg
-table_selected_cells_fg
-table_selected_rows_border_fg
-table_selected_rows_bg
-table_selected_rows_fg
-table_selected_columns_border_fg
-table_selected_columns_bg
-table_selected_columns_fg
-
-header_bg
-header_border_fg
-header_grid_fg
-header_fg
-header_selected_cells_bg
-header_selected_cells_fg
-header_selected_columns_bg
-header_selected_columns_fg
-
-index_bg
-index_border_fg
-index_grid_fg
-index_fg
-index_selected_cells_bg
-index_selected_cells_fg
-index_selected_rows_bg
-index_selected_rows_fg
-
-resizing_line_fg
-drag_and_drop_bg
-outline_thickness
-outline_color
-frame_bg
-popup_menu_font
-popup_menu_fg
-popup_menu_bg
-popup_menu_highlight_bg
-popup_menu_highlight_fg
-
-# scroll bars
-vertical_scroll_background
-horizontal_scroll_background
-vertical_scroll_troughcolor
-horizontal_scroll_troughcolor
-vertical_scroll_lightcolor
-horizontal_scroll_lightcolor
-vertical_scroll_darkcolor
-horizontal_scroll_darkcolor
-vertical_scroll_bordercolor
-horizontal_scroll_bordercolor
-vertical_scroll_active_bg
-horizontal_scroll_active_bg
-vertical_scroll_not_active_bg
-horizontal_scroll_not_active_bg
-vertical_scroll_pressed_bg
-horizontal_scroll_pressed_bg
-vertical_scroll_active_fg
-horizontal_scroll_active_fg
-vertical_scroll_not_active_fg
-horizontal_scroll_not_active_fg
-vertical_scroll_pressed_fg
-horizontal_scroll_pressed_fg
-scrollbar_theme_inheritance
-scrollbar_show_arrows
-vertical_scroll_arrowsize
-horizontal_scroll_arrowsize
-vertical_scroll_borderwidth
-horizontal_scroll_borderwidth
-vertical_scroll_gripcount
-horizontal_scroll_gripcount
-
-# for changing the in-built right click menus labels
-# use a string as an argument
-
-sort_cells_label
-sort_cells_x_label
-sort_row_label
-sort_column_label
-sort_rows_label
-sort_columns_label
-sort_cells_reverse_label
-sort_cells_x_reverse_label
-sort_row_reverse_label
-sort_column_reverse_label
-sort_rows_reverse_label
-sort_columns_reverse_label
-sort_cells_accelerator
-sort_cells_x_accelerator
-sort_row_accelerator
-sort_column_accelerator
-sort_rows_accelerator
-sort_columns_accelerator
-sort_cells_reverse_accelerator
-sort_cells_x_reverse_accelerator
-sort_row_reverse_accelerator
-sort_column_reverse_accelerator
-sort_rows_reverse_accelerator
-sort_columns_reverse_accelerator
-
-edit_header_label
-edit_header_accelerator
-edit_index_label
-edit_index_accelerator
-edit_cell_label
-edit_cell_accelerator
-cut_label
-cut_accelerator
-cut_contents_label
-cut_contents_accelerator
-copy_label
-copy_accelerator
-copy_contents_label
-copy_contents_accelerator
-paste_label
-paste_accelerator
-delete_label
-delete_accelerator
-clear_contents_label
-clear_contents_accelerator
-delete_columns_label
-delete_columns_accelerator
-insert_columns_left_label
-insert_columns_left_accelerator
-insert_column_label
-insert_column_accelerator
-insert_columns_right_label
-insert_columns_right_accelerator
-delete_rows_label
-delete_rows_accelerator
-insert_rows_above_label
-insert_rows_above_accelerator
-insert_rows_below_label
-insert_rows_below_accelerator
-insert_row_label
-insert_row_accelerator
-select_all_label
-select_all_accelerator
-undo_label
-undo_accelerator
-
-# for changing the keyboard bindings for copy, paste, etc.
-# use a list of strings as an argument
-copy_bindings
-cut_bindings
-paste_bindings
-undo_bindings
-redo_bindings
-delete_bindings
-select_all_bindings
-select_columns_bindings
-select_rows_bindings
-row_start_bindings
-table_start_bindings
-tab_bindings
-up_bindings
-right_bindings
-down_bindings
-left_bindings
-shift_up_bindings
-shift_right_bindings
-shift_down_bindings
-shift_left_bindings
-prior_bindings
-next_bindings
-</code></pre>
-<p>Notes:</p>
-<ul>
-<li>A dictionary can be provided instead of using the keyword arguments:</li>
-</ul>
-<pre><code class="language-python">kwargs = {
-    &quot;copy_bindings&quot;: [
-        &quot;&lt;Control-g&gt;&quot;,
-        &quot;&lt;Control-G&gt;&quot;,
-    ],
-    &quot;cut_bindings&quot;: [
-        &quot;&lt;Control-c&gt;&quot;,
-        &quot;&lt;Control-C&gt;&quot;,
-    ],
-}
-sheet.set_options(**kwargs)
-</code></pre>
-<hr />
-<p>Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.</p>
-<pre><code class="language-python">get_cell_options(key: None | str = None, canvas: Literal[&quot;table&quot;, &quot;row_index&quot;, &quot;header&quot;] = &quot;table&quot;) -&gt; dict
-</code></pre>
-<hr />
-<p>Get internal storage dictionary of highlights, readonly rows, dropdowns etc. Specifically for row options.</p>
-<pre><code class="language-python">get_row_options(key: None | str = None) -&gt; dict
-</code></pre>
-<hr />
-<p>Get internal storage dictionary of highlights, readonly columns, dropdowns etc. Specifically for column options.</p>
-<pre><code class="language-python">get_column_options(key: None | str = None) -&gt; dict
-</code></pre>
-<hr />
-<p>Get internal storage dictionary of highlights, readonly header cells, dropdowns etc. Specifically for header options.</p>
-<pre><code class="language-python">get_header_options(key: None | str = None) -&gt; dict
-</code></pre>
-<hr />
-<p>Get internal storage dictionary of highlights, readonly row index cells, dropdowns etc. Specifically for row index options.</p>
-<pre><code class="language-python">get_index_options(key: None | str = None) -&gt; dict
-</code></pre>
-<hr />
-<p>Delete any formats, alignments, dropdown boxes, check boxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.</p>
-<pre><code class="language-python">del_out_of_bounds_options() -&gt; Sheet
-</code></pre>
-<hr />
-<p>Delete all alignments, dropdown boxes, check boxes, highlights etc.</p>
-<pre><code class="language-python">reset_all_options() -&gt; Sheet
-</code></pre>
-<hr />
-<p>Flash a dashed box of chosen dimensions.</p>
-<pre><code class="language-python">show_ctrl_outline(
-    canvas: Literal[&quot;table&quot;] = &quot;table&quot;,
-    start_cell: tuple[int, int] = (0, 0),
-    end_cell: tuple[int, int] = (1, 1),
-) -&gt; Sheet
-</code></pre>
-<hr />
-<p>Various functions related to the Sheets internal undo and redo stacks.</p>
-<pre><code class="language-python"># clears both undos and redos
-reset_undos() -&gt; Sheet
-
-# get the Sheets modifiable deque variables which store changes for undo and redo
-get_undo_stack() -&gt; deque
-get_redo_stack() -&gt; deque
-
-# set the Sheets undo and redo stacks, returns Sheet widget
-set_undo_stack(stack: deque) -&gt; Sheet
-set_redo_stack(stack: deque) -&gt; Sheet
-</code></pre>
-<hr />
-<p>Refresh the table.</p>
-<pre><code class="language-python">refresh(redraw_header: bool = True, redraw_row_index: bool = True) -&gt; Sheet
-</code></pre>
-<hr />
-<p>Refresh the table.</p>
-<pre><code class="language-python">redraw(redraw_header: bool = True, redraw_row_index: bool = True) -&gt; Sheet
-</code></pre>
-<hr />
 <h1 id="treeview-mode"><strong>Treeview Mode</strong></h1>
 <p>tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though.</p>
 <p>Always either use a fresh <code>Sheet()</code> instance or use <a href="#reset-all-or-specific-sheet-elements-and-attributes">Sheet.reset()</a> before enabling treeview mode.</p>
@@ -6308,7 +6624,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <p>You can make a treeview mode sheet by using the initialization parameter <code>treeview</code>:</p>
 <pre><code class="language-python">sheet = Sheet(parent, treeview=True)
 </code></pre>
-<p>Or by using <a href="#reset-all-or-specific-sheet-elements-and-attributes"><code>Sheet.reset()</code></a> and <a href="#sheet-options-and-other-functions"><code>Sheet.set_options()</code></a>.</p>
+<p>Or by using <a href="#reset-all-or-specific-sheet-elements-and-attributes"><code>Sheet.reset()</code></a> and <a href="#sheet-options"><code>Sheet.set_options()</code></a>.</p>
 <pre><code class="language-python">my_sheet.reset()
 my_sheet.set_options(treeview=True)
 </code></pre>
