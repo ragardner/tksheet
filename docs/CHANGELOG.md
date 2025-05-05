@@ -1,3 +1,6 @@
+### Version 7.5.2
+####
+
 ### Version 7.5.1
 #### Fixed:
 - Delete icon using clear icon.
