@@ -286,18 +286,23 @@ class MainTable(tk.Canvas):
         self.align = kwargs["align"]
         self.PAR.ops.table_font = FontTuple(
             self.PAR.ops.table_font[0],
-            max(1, int(self.PAR.ops.table_font[1] * kwargs["zoom"] / 100)),
+            max(1, int(round(self.PAR.ops.table_font[1]) * kwargs["zoom"] / 100)),
             self.PAR.ops.table_font[2],
         )
         self.PAR.ops.index_font = FontTuple(
             self.PAR.ops.index_font[0],
-            max(1, int(self.PAR.ops.index_font[1] * kwargs["zoom"] / 100)),
+            max(1, int(round(self.PAR.ops.index_font[1]) * kwargs["zoom"] / 100)),
             self.PAR.ops.index_font[2],
         )
         self.PAR.ops.header_font = FontTuple(
             self.PAR.ops.header_font[0],
-            max(1, int(self.PAR.ops.header_font[1] * kwargs["zoom"] / 100)),
+            max(1, int(round(self.PAR.ops.header_font[1]) * kwargs["zoom"] / 100)),
             self.PAR.ops.header_font[2],
+        )
+        self.PAR.ops.popup_menu_font = FontTuple(
+            self.PAR.ops.popup_menu_font[0],
+            max(1, int(round(self.PAR.ops.popup_menu_font[1]) * kwargs["zoom"] / 100)),
+            self.PAR.ops.popup_menu_font[2],
         )
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text="", font=self.PAR.ops.table_font)
@@ -4277,16 +4282,23 @@ class MainTable(tk.Canvas):
             (self.PAR.ops.table_font[0], self.PAR.ops.table_font[1] + 1, self.PAR.ops.table_font[2]),
             (self.PAR.ops.index_font[0], self.PAR.ops.index_font[1] + 1, self.PAR.ops.index_font[2]),
             (self.PAR.ops.header_font[0], self.PAR.ops.header_font[1] + 1, self.PAR.ops.header_font[2]),
+            (self.PAR.ops.popup_menu_font[0], self.PAR.ops.popup_menu_font[1] + 1, self.PAR.ops.popup_menu_font[2]),
             "in",
         )
 
     def zoom_out(self, event: Any = None) -> None:
-        if self.PAR.ops.table_font[1] < 2 or self.PAR.ops.index_font[1] < 2 or self.PAR.ops.header_font[1] < 2:
+        if (
+            self.PAR.ops.table_font[1] < 2
+            or self.PAR.ops.index_font[1] < 2
+            or self.PAR.ops.header_font[1] < 2
+            or self.PAR.ops.popup_menu_font[1] < 2
+        ):
             return
         self.zoom_font(
             (self.PAR.ops.table_font[0], self.PAR.ops.table_font[1] - 1, self.PAR.ops.table_font[2]),
             (self.PAR.ops.index_font[0], self.PAR.ops.index_font[1] - 1, self.PAR.ops.index_font[2]),
             (self.PAR.ops.header_font[0], self.PAR.ops.header_font[1] - 1, self.PAR.ops.header_font[2]),
+            (self.PAR.ops.popup_menu_font[0], self.PAR.ops.popup_menu_font[1] - 1, self.PAR.ops.popup_menu_font[2]),
             "out",
         )
 
@@ -4295,6 +4307,7 @@ class MainTable(tk.Canvas):
         table_font: FontTuple,
         index_font: FontTuple,
         header_font: FontTuple,
+        popup_font: FontTuple,
         zoom: Literal["in", "out"],
     ) -> None:
         self.saved_column_widths = {}
@@ -4317,6 +4330,7 @@ class MainTable(tk.Canvas):
         self.set_table_font(table_font, row_heights=False)
         self.set_index_font(index_font, row_heights=False)
         self.set_header_font(header_font)
+        self.PAR.ops.popup_menu_font = FontTuple(*popup_font)
         if self.PAR.ops.set_cell_sizes_on_zoom:
             self.set_all_cell_sizes_to_text()
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
@@ -4336,6 +4350,7 @@ class MainTable(tk.Canvas):
             r_pc=r_pc,
             c_pc=c_pc,
         )
+        self.create_rc_menus()
 
     def get_txt_w(self, txt: str, font: None | FontTuple = None) -> int:
         self.txt_measure_canvas.itemconfig(
@@ -4414,7 +4429,7 @@ class MainTable(tk.Canvas):
             not isinstance(newfont, tuple)
             or len(newfont) != 3
             or not isinstance(newfont[0], str)
-            or not isinstance(newfont[1], int)
+            or not isinstance(newfont[1], (int, float))
             or not isinstance(newfont[2], str)
         ):
             raise ValueError(font_value_error)
@@ -4422,7 +4437,7 @@ class MainTable(tk.Canvas):
     def set_table_font(self, newfont: tuple | None = None, row_heights: bool = True) -> tuple[str, int, str]:
         if newfont:
             self.check_font(newfont)
-            self.PAR.ops.table_font = FontTuple(*newfont)
+            self.PAR.ops.table_font = FontTuple(*(newfont[0], int(round(newfont[1])), newfont[2]))
             old_min_row_height = int(self.min_row_height)
             old_default_row_height = int(self.get_default_row_height())
             self.set_table_font_help()
@@ -4463,7 +4478,7 @@ class MainTable(tk.Canvas):
     def set_index_font(self, newfont: tuple | None = None, row_heights: bool = True) -> tuple[str, int, str]:
         if newfont:
             self.check_font(newfont)
-            self.PAR.ops.index_font = FontTuple(*newfont)
+            self.PAR.ops.index_font = FontTuple(*(newfont[0], int(round(newfont[1])), newfont[2]))
             old_min_row_height = int(self.min_row_height)
             old_default_row_height = int(self.get_default_row_height())
             self.set_index_font_help()
@@ -4507,7 +4522,7 @@ class MainTable(tk.Canvas):
     def set_header_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
         if newfont:
             self.check_font(newfont)
-            self.PAR.ops.header_font = FontTuple(*newfont)
+            self.PAR.ops.header_font = FontTuple(*(newfont[0], int(round(newfont[1])), newfont[2]))
             self.set_header_font_help()
             self.recreate_all_selection_boxes()
         return self.PAR.ops.header_font

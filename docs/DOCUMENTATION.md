@@ -5128,22 +5128,30 @@ Parameters:
 
 ### **Font**
 
-- Font arguments require a three tuple e.g. `("Arial", 12, "normal")` or `("Arial", 12, "bold")` or `("Arial", 12, "italic")`
-- The table and index currently share a font, it's not possible to change the index font separate from the table font.
+- Font arguments require a three tuple e.g. `("Arial", 12, "normal")` or `("Arial", 12, "bold")` or `("Arial", 12, "italic")`.
 
-**Set the table and index font**
+**Set the table font**
 
 ```python
-font(
-    newfont: tuple[str, int, str] | None = None,
-    reset_row_positions: bool = True,
-) -> tuple[str, int, str]
+font(newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]
+```
+
+**Set the index font**
+
+```python
+index_font(newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]
 ```
 
 **Set the header font**
 
 ```python
 header_font(newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]
+```
+
+**Set the in-built popup menu font**
+
+```python
+popup_menu_font(newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]
 ```
 
 ### **Text Alignment**

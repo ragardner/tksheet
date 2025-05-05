@@ -1,6 +1,12 @@
 ### Version 7.5.1
 #### Fixed:
 - Delete icon using clear icon.
+- Wrong size clear icon.
+- Popup menu font not scaling with zoom.
+- [#293](https://github.com/ragardner/tksheet/issues/293). While tkinter doesn't allow floats for font sizes we can instead round up or down.
+
+#### Added:
+- A function for changing popup menu font. It also can be changed using `set_options()`.
 
 ### Version 7.5.0
 #### Fixed:

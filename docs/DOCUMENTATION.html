@@ -5295,17 +5295,19 @@ self.sheet.readonly(
 <h1 id="text-font-and-alignment"><strong>Text Font and Alignment</strong></h1>
 <h3 id="font"><strong>Font</strong></h3>
 <ul>
-<li>Font arguments require a three tuple e.g. <code>("Arial", 12, "normal")</code> or <code>("Arial", 12, "bold")</code> or <code>("Arial", 12, "italic")</code></li>
-<li>The table and index currently share a font, it's not possible to change the index font separate from the table font.</li>
+<li>Font arguments require a three tuple e.g. <code>("Arial", 12, "normal")</code> or <code>("Arial", 12, "bold")</code> or <code>("Arial", 12, "italic")</code>.</li>
 </ul>
-<p><strong>Set the table and index font</strong></p>
-<pre><code class="language-python">font(
-    newfont: tuple[str, int, str] | None = None,
-    reset_row_positions: bool = True,
-) -&gt; tuple[str, int, str]
+<p><strong>Set the table font</strong></p>
+<pre><code class="language-python">font(newfont: tuple[str, int, str] | None = None) -&gt; tuple[str, int, str]
+</code></pre>
+<p><strong>Set the index font</strong></p>
+<pre><code class="language-python">index_font(newfont: tuple[str, int, str] | None = None) -&gt; tuple[str, int, str]
 </code></pre>
 <p><strong>Set the header font</strong></p>
 <pre><code class="language-python">header_font(newfont: tuple[str, int, str] | None = None) -&gt; tuple[str, int, str]
+</code></pre>
+<p><strong>Set the in-built popup menu font</strong></p>
+<pre><code class="language-python">popup_menu_font(newfont: tuple[str, int, str] | None = None) -&gt; tuple[str, int, str]
 </code></pre>
 <h3 id="text-alignment"><strong>Text Alignment</strong></h3>
 <p>There are functions to set the text alignment for specific cells/rows/columns and also functions to set the text alignment for a whole part of the sheet (table/index/header).</p>

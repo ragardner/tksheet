@@ -2703,6 +2703,11 @@ class Sheet(tk.Frame):
     def index_font(self, newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]:
         return self.MT.set_index_font(newfont)
 
+    def popup_menu_font(self, newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]:
+        if newfont:
+            self.ops.popup_menu_font = FontTuple(*(newfont[0], int(round(newfont[1])), newfont[2]))
+        return self.ops.popup_menu_font
+
     def table_align(
         self,
         align: str | None = None,
@@ -4142,7 +4147,7 @@ class Sheet(tk.Frame):
         if "show_top_left" in kwargs:
             self.show("top_left")
         if "popup_menu_font" in kwargs:
-            self.ops.popup_menu_font = FontTuple(*self.ops.popup_menu_font)
+            self.popup_menu_font(self.ops.popup_menu_font)
         if "font" in kwargs:
             self.MT.set_table_font(kwargs["font"])
         elif "table_font" in kwargs:
@@ -4176,10 +4181,10 @@ class Sheet(tk.Frame):
             )
         if any(k in kwargs for k in scrollbar_options_keys):
             self.set_scrollbar_options()
-        self.MT.create_rc_menus()
         if "treeview" in kwargs:
             self.index_align("nw", redraw=False)
             self.ops.paste_can_expand_y = False
+        self.MT.create_rc_menus()
         return self.set_refresh_timer(redraw)
 
     def set_scrollbar_options(self) -> Sheet:
