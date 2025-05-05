@@ -189,7 +189,7 @@ class MainTable(tk.Canvas):
         self.min_row_height = 0
         self.min_header_height = 0
         self.being_drawn_item = None
-        self.extra_motion_func = None
+        self.extra_enter_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
         self.extra_b1_release_func = None
@@ -389,7 +389,7 @@ class MainTable(tk.Canvas):
 
     def basic_bindings(self, enable: bool = True) -> None:
         bindings = (
-            ("<Enter>", self, self.mouse_motion),
+            ("<Enter>", self, self.enter),
             ("<Configure>", self, self.window_configured),
             ("<ButtonPress-1>", self, self.b1_press),
             ("<B1-Motion>", self, self.b1_motion),
@@ -3662,11 +3662,11 @@ class MainTable(tk.Canvas):
         self.CH.rsz_w = None
         self.CH.rsz_h = None
 
-    def mouse_motion(self, event: Any) -> None:
+    def enter(self, event: Any) -> None:
         self.config(cursor="")
         self.current_cursor = ""
         self.reset_resize_vars()
-        try_binding(self.extra_motion_func, event)
+        try_binding(self.extra_enter_func, event)
 
     def not_currently_resizing(self) -> bool:
         return all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))

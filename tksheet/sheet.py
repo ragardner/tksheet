@@ -703,7 +703,7 @@ class Sheet(tk.Frame):
             self.RI.extra_double_b1_func = func
             self.TL.extra_double_b1_func = func
         elif binding == "<Motion>":
-            self.MT.extra_motion_func = func
+            self.MT.bind("<Motion>", func, add=add)
             self.CH.extra_motion_func = func
             self.RI.extra_motion_func = func
             self.TL.extra_motion_func = func
@@ -718,7 +718,10 @@ class Sheet(tk.Frame):
             else:
                 self.bound_events[binding] = [func]
         else:
-            self.MT.bind(binding, func, add=add)
+            if binding == "<Enter>":
+                self.MT.extra_enter_func = func
+            else:
+                self.MT.bind(binding, func, add=add)
             self.CH.bind(binding, func, add=add)
             self.RI.bind(binding, func, add=add)
             self.TL.bind(binding, func, add=add)

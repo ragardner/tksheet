@@ -1,5 +1,9 @@
 ### Version 7.5.2
-####
+#### Fixed:
+- [#294](https://github.com/ragardner/tksheet/issues/294).
+
+#### Removed:
+- `MainTable.extra_motion_func` variable as it's no longer required.
 
 ### Version 7.5.1
 #### Fixed:
