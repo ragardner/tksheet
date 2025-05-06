@@ -434,7 +434,7 @@ class FindWindow(tk.Frame):
         self.tktext.reset(
             menu_kwargs=menu_kwargs,
             sheet_ops=sheet_ops,
-            font=menu_kwargs.font,
+            font=sheet_ops.table_font,
             bg=bg,
             fg=fg,
             select_bg=select_bg,
@@ -443,7 +443,7 @@ class FindWindow(tk.Frame):
         self.replace_tktext.reset(
             menu_kwargs=menu_kwargs,
             sheet_ops=sheet_ops,
-            font=menu_kwargs.font,
+            font=sheet_ops.table_font,
             bg=bg,
             fg=fg,
             select_bg=select_bg,
@@ -459,7 +459,7 @@ class FindWindow(tk.Frame):
             self.replace_all,
         ):
             widget.config(
-                font=menu_kwargs.font,
+                font=sheet_ops.table_font,
                 bg=bg,
                 fg=fg,
                 highlightbackground=bg,

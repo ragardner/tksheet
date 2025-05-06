@@ -247,7 +247,7 @@ class TextEditor(tk.Frame):
             menu_kwargs=menu_kwargs,
             sheet_ops=sheet_ops,
             align=align,
-            font=menu_kwargs.font,
+            font=sheet_ops.table_font,
             bg=bg,
             fg=fg,
             select_bg=select_bg,
