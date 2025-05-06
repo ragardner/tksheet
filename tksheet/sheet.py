@@ -5500,17 +5500,8 @@ class Sheet(tk.Frame):
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
-        if isinstance(rows, int):
-            rows = [rows]
-        if not readonly:
-            for r in rows:
-                if r in self.MT.row_options and "readonly" in self.MT.row_options[r]:
-                    del self.MT.row_options[r]["readonly"]
-        else:
-            for r in rows:
-                if r not in self.MT.row_options:
-                    self.MT.row_options[r] = {}
-                self.MT.row_options[r]["readonly"] = True
+        for r in (rows,) if isinstance(rows, int) else rows:
+            set_readonly(self.MT.row_options, r, readonly)
         return self.set_refresh_timer(redraw)
 
     def readonly_columns(
@@ -5519,17 +5510,8 @@ class Sheet(tk.Frame):
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
-        if isinstance(columns, int):
-            columns = [columns]
-        if not readonly:
-            for c in columns:
-                if c in self.MT.col_options and "readonly" in self.MT.col_options[c]:
-                    del self.MT.col_options[c]["readonly"]
-        else:
-            for c in columns:
-                if c not in self.MT.col_options:
-                    self.MT.col_options[c] = {}
-                self.MT.col_options[c]["readonly"] = True
+        for c in (columns,) if isinstance(columns, int) else columns:
+            set_readonly(self.MT.col_options, c, readonly)
         return self.set_refresh_timer(redraw)
 
     def readonly_cells(
@@ -5540,45 +5522,31 @@ class Sheet(tk.Frame):
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
-        if not readonly:
-            if cells:
-                for r, c in cells:
-                    if (r, c) in self.MT.cell_options and "readonly" in self.MT.cell_options[(r, c)]:
-                        del self.MT.cell_options[(r, c)]["readonly"]
-            else:
-                if (
-                    row,
-                    column,
-                ) in self.MT.cell_options and "readonly" in self.MT.cell_options[(row, column)]:
-                    del self.MT.cell_options[(row, column)]["readonly"]
+        if cells:
+            for r, c in cells:
+                set_readonly(self.MT.cell_options, (r, c), readonly=readonly)
         else:
-            if cells:
-                for r, c in cells:
-                    if (r, c) not in self.MT.cell_options:
-                        self.MT.cell_options[(r, c)] = {}
-                    self.MT.cell_options[(r, c)]["readonly"] = True
-            else:
-                if (row, column) not in self.MT.cell_options:
-                    self.MT.cell_options[(row, column)] = {}
-                self.MT.cell_options[(row, column)]["readonly"] = True
+            set_readonly(self.MT.cell_options, (row, column), readonly=readonly)
         return self.set_refresh_timer(redraw)
 
     def readonly_header(
         self,
-        columns: list[int],
+        columns: list[int] | int,
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
-        self.CH.readonly_header(columns=columns, readonly=readonly)
+        for c in (columns, int) if isinstance(columns, int) else columns:
+            set_readonly(self.CH.cell_options, c, readonly)
         return self.set_refresh_timer(redraw)
 
     def readonly_index(
         self,
-        rows: list[int],
+        rows: list[int] | int,
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
-        self.RI.readonly_index(rows=rows, readonly=readonly)
+        for r in (rows,) if isinstance(rows, int) else rows:
+            set_readonly(self.RI.cell_options, r, readonly)
         return self.set_refresh_timer(redraw)
 
     def dehighlight_rows(
