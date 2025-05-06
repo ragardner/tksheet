@@ -26,6 +26,7 @@ from .functions import (
     event_dict,
     event_has_char_key,
     event_opens_dropdown_or_checkbox,
+    get_menu_kwargs,
     get_n2a,
     get_new_indexes,
     int_x_tuple,
@@ -39,7 +40,7 @@ from .functions import (
     try_binding,
     wrap_text,
 )
-from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, Node, TextEditorStorage
+from .other_classes import DraggedRowColumn, DropdownStorage, EventDataDict, Node, TextEditorStorage
 from .sorting import sort_columns_by_row, sort_row
 from .text_editor import TextEditor
 
@@ -1976,16 +1977,9 @@ class RowIndex(tk.Canvas):
         w = self.current_width + 1
         h = self.MT.row_positions[r + 1] - y + 1
         kwargs = {
-            "menu_kwargs": DotDict(
-                {
-                    "font": self.ops.index_font,
-                    "foreground": self.ops.popup_menu_fg,
-                    "background": self.ops.popup_menu_bg,
-                    "activebackground": self.ops.popup_menu_highlight_bg,
-                    "activeforeground": self.ops.popup_menu_highlight_fg,
-                }
-            ),
+            "menu_kwargs": get_menu_kwargs(self.ops),
             "sheet_ops": self.ops,
+            "font": self.ops.index_font,
             "border_color": self.ops.index_selected_rows_bg,
             "text": text,
             "state": state,

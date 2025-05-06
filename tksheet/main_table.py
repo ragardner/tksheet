@@ -7587,6 +7587,7 @@ class MainTable(tk.Canvas):
         kwargs = {
             "menu_kwargs": get_menu_kwargs(self.PAR.ops),
             "sheet_ops": self.PAR.ops,
+            "font": self.PAR.ops.table_font,
             "border_color": self.PAR.ops.table_selected_box_cells_fg,
             "text": text,
             "state": state,

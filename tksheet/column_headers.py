@@ -24,6 +24,7 @@ from .functions import (
     event_dict,
     event_has_char_key,
     event_opens_dropdown_or_checkbox,
+    get_menu_kwargs,
     get_n2a,
     int_x_tuple,
     is_contiguous,
@@ -35,7 +36,7 @@ from .functions import (
     try_binding,
     wrap_text,
 )
-from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, TextEditorStorage
+from .other_classes import DraggedRowColumn, DropdownStorage, EventDataDict, TextEditorStorage
 from .row_index import RowIndex
 from .sorting import sort_column, sort_rows_by_column, sort_tree_rows_by_column
 from .text_editor import TextEditor
@@ -1804,16 +1805,9 @@ class ColumnHeaders(tk.Canvas):
         w = self.MT.col_positions[c + 1] - x
         h = self.current_height + 1
         kwargs = {
-            "menu_kwargs": DotDict(
-                {
-                    "font": self.ops.table_font,
-                    "foreground": self.ops.popup_menu_fg,
-                    "background": self.ops.popup_menu_bg,
-                    "activebackground": self.ops.popup_menu_highlight_bg,
-                    "activeforeground": self.ops.popup_menu_highlight_fg,
-                }
-            ),
+            "menu_kwargs": get_menu_kwargs(self.ops),
             "sheet_ops": self.ops,
+            "font": self.ops.header_font,
             "border_color": self.ops.header_selected_columns_bg,
             "text": text,
             "state": state,

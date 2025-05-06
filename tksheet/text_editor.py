@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from .constants import align_helper, ctrl_key, rc_binding
 from .functions import convert_align
-from .other_classes import DotDict
+from .other_classes import DotDict, FontTuple
 
 
 class TextEditorTkText(tk.Text):
@@ -231,6 +231,7 @@ class TextEditor(tk.Frame):
         show_border: bool,
         menu_kwargs: DotDict,
         sheet_ops: DotDict,
+        font: FontTuple,
         bg: str,
         fg: str,
         select_bg: str,
@@ -247,7 +248,7 @@ class TextEditor(tk.Frame):
             menu_kwargs=menu_kwargs,
             sheet_ops=sheet_ops,
             align=align,
-            font=sheet_ops.table_font,
+            font=font,
             bg=bg,
             fg=fg,
             select_bg=select_bg,
