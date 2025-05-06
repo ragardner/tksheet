@@ -1222,7 +1222,7 @@ class MainTable(tk.Canvas):
             lastbox_numcols = lastbox_c2 - lastbox_c1
             if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
                 repeat_num = int(lastbox_numrows / new_data_numrows)
-                data.extend(chain.from_iterable([r.copy() for r in data] for _ in range(repeat_num - 1)))
+                data.extend(list(chain.from_iterable([r.copy() for r in data] for _ in range(repeat_num - 1))))
                 new_data_numrows *= repeat_num
 
             if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
