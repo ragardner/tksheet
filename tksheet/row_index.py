@@ -2414,17 +2414,18 @@ class RowIndex(tk.Canvas):
                 self.MT._row_index[datarn] = value
 
     def input_valid_for_cell(self, datarn: int, value: Any, check_readonly: bool = True) -> bool:
-        kwargs = self.get_cell_kwargs(datarn, key=None)
-        if check_readonly and "readonly" in kwargs:
+        if check_readonly and self.get_cell_kwargs(datarn, key="readonly"):
             return False
-        elif "checkbox" in kwargs:
+        elif self.get_cell_kwargs(datarn, key="checkbox"):
             return is_bool_like(value)
         else:
             return not (
                 self.cell_equal_to(datarn, value)
-                or (kwargs := kwargs.get("dropdown", {}))
-                and kwargs["validate_input"]
-                and value not in kwargs["values"]
+                or (
+                    (kwargs := self.get_cell_kwargs(datarn, key="dropdown"))
+                    and kwargs["validate_input"]
+                    and value not in kwargs["values"]
+                )
             )
 
     def cell_equal_to(self, datarn: int, value: Any) -> bool:
@@ -2487,11 +2488,14 @@ class RowIndex(tk.Canvas):
         if self.ops.treeview:
             iid = self.new_iid()
             return Node(text=iid, iid=iid, parent=self.get_row_parent(datarn))
-        kwargs = self.get_cell_kwargs(datarn, key=None, cell=r_ops)
-        if "checkbox" in kwargs:
+        if self.get_cell_kwargs(datarn, key="checkbox", cell=r_ops):
             return False
-        elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
-            return kwargs["dropdown"]["values"][0]
+        elif (
+            (kwargs := self.get_cell_kwargs(datarn, key="dropdown", cell=r_ops))
+            and kwargs["validate_input"]
+            and kwargs["values"]
+        ):
+            return kwargs["values"][0]
         else:
             return ""
 

@@ -2245,17 +2245,18 @@ class ColumnHeaders(tk.Canvas):
                 self.MT._headers[datacn] = value
 
     def input_valid_for_cell(self, datacn: int, value: Any, check_readonly: bool = True) -> bool:
-        kwargs = self.get_cell_kwargs(datacn, key=None)
-        if check_readonly and "readonly" in kwargs:
+        if check_readonly and self.get_cell_kwargs(datacn, key="readonly"):
             return False
-        elif "checkbox" in kwargs:
+        elif self.get_cell_kwargs(datacn, key="checkbox"):
             return is_bool_like(value)
         else:
             return not (
                 self.cell_equal_to(datacn, value)
-                or (kwargs := kwargs.get("dropdown", {}))
-                and kwargs["validate_input"]
-                and value not in kwargs["values"]
+                or (
+                    (kwargs := self.get_cell_kwargs(datacn, key="dropdown"))
+                    and kwargs["validate_input"]
+                    and value not in kwargs["values"]
+                )
             )
 
     def cell_equal_to(self, datacn: int, value: Any) -> bool:
@@ -2311,11 +2312,14 @@ class ColumnHeaders(tk.Canvas):
         return value
 
     def get_value_for_empty_cell(self, datacn: int, c_ops: bool = True) -> Any:
-        kwargs = self.get_cell_kwargs(datacn, key=None, cell=c_ops)
-        if "checkbox" in kwargs:
+        if self.get_cell_kwargs(datacn, key="checkbox", cell=c_ops):
             return False
-        elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
-            return kwargs["dropdown"]["values"][0]
+        elif (
+            (kwargs := self.get_cell_kwargs(datacn, key="dropdown", cell=c_ops))
+            and kwargs["validate_input"]
+            and kwargs["values"]
+        ):
+            return kwargs["values"][0]
         else:
             return ""
 
