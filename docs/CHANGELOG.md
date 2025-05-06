@@ -1,5 +1,9 @@
 ### Version 7.5.3
-####
+#### Fixed:
+- Prevent row over-expansion potentially resulting in massive memory use upon paste due to lazy chain evaluation. [#295](https://github.com/ragardner/tksheet/issues/295).
+- Regression causing some readonly functions to not work. [#296](https://github.com/ragardner/tksheet/issues/296).
+- Wrong font in cell text editor and find window.
+- Wrong font in header and index text editors.
 
 ### Version 7.5.2
 #### Fixed:
