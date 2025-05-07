@@ -1,3 +1,13 @@
+### Version 7.5.4
+#### Addressed:
+- [#297](https://github.com/ragardner/tksheet/issues/297). More work is likely required but this is an improvement.
+
+#### Changed:
+- While treeview mode is enabled and due to issues modifying selection boxes after row moves, selection boxes will no longer be modified after moving items/rows when using treeview mode.
+
+#### Improved:
+- Performance improvement for treeview mode function `.index()`.
+
 ### Version 7.5.3
 #### Fixed:
 - Prevent row over-expansion potentially resulting in massive memory use upon paste due to lazy chain evaluation. [#295](https://github.com/ragardner/tksheet/issues/295).

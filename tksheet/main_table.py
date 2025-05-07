@@ -1967,6 +1967,7 @@ class MainTable(tk.Canvas):
                     )
             else:
                 self.recreate_all_selection_boxes()
+
         return data_new_idxs, disp_new_idxs, event_data
 
     def get_max_row_idx(self, maxidx: int | None = None) -> int:
@@ -2117,6 +2118,7 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = modification["selection_boxes"]
         event_data["selected"] = modification["selected"]
         saved_cells = False
+
         if modification["added"]["rows"] or modification["added"]["columns"]:
             event_data = self.save_cells_using_modification(modification, event_data)
             saved_cells = True
@@ -5629,12 +5631,8 @@ class MainTable(tk.Canvas):
         return {
             "row_positions": list(self.row_positions),
             "col_positions": list(self.col_positions),
-            "displayed_rows": int(self.displayed_rows)
-            if isinstance(self.displayed_rows, int)
-            else list(self.displayed_rows),
-            "displayed_columns": int(self.displayed_columns)
-            if isinstance(self.displayed_columns, int)
-            else list(self.displayed_columns),
+            "displayed_rows": list(self.displayed_rows),
+            "displayed_columns": list(self.displayed_columns),
             "all_rows_displayed": bool(self.all_rows_displayed),
             "saved_row_heights": dict(self.saved_row_heights),
             "saved_column_widths": dict(self.saved_column_widths),

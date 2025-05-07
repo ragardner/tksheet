@@ -4744,7 +4744,7 @@ class Sheet(tk.Frame):
             self.hide_rows(datarn, deselect_all=False, data_indexes=True)
         return iid
 
-    def _get_id_insert_row(self, index: int, parent: str) -> int:
+    def _get_id_insert_row(self, index: int | None, parent: str) -> int:
         if parent:
             if isinstance(index, int):
                 index = min(index, len(self.RI.iid_children(parent)))
@@ -4759,7 +4759,7 @@ class Sheet(tk.Frame):
         else:
             if isinstance(index, int):
                 datarn = index
-                if index and (datarn := self.top_index_row(datarn)) is None:
+                if index and (datarn := self.top_index_row(index)) is None:
                     datarn = len(self.MT._row_index)
             else:
                 datarn = len(self.MT._row_index)
@@ -4792,6 +4792,8 @@ class Sheet(tk.Frame):
         rns_to_add = {}
         for rn, r in enumerate(data, start=datarn):
             iid = self.RI.new_iid() if iid_column is None else r[iid_column]
+            if iid in self.RI.rns:
+                raise ValueError(f"iid '{iid}' already exists.")
             new_node = Node(
                 r[text_column] if isinstance(text_column, int) else text_column if isinstance(text_column, str) else "",
                 iid,
@@ -4995,11 +4997,24 @@ class Sheet(tk.Frame):
             raise ValueError(f"Item '{item}' does not exist.")
         return self.RI.iid_parent(item)
 
-    def index(self, item: str) -> int:
+    def index(self, item: str, safety: bool = False) -> int:
+        """
+        Finds the index of an item amongst it's siblings in the
+        treeview.
+
+        'safety' is only necessary when the internal row number dict
+        is not able to provide row numbers, e.g. when modifying the
+        tree and before the action is complete.
+
+        When 'True' the fn uses list.index() instead.
+        """
         if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        elif self.RI.iid_parent(item):
-            return self.RI.parent_node(item).children.index(item)
+        elif par := self.RI.iid_parent(item):
+            if not safety:
+                return self.RI.rns[item] - self.RI.rns[par] - 1
+            else:
+                return self.RI.parent_node(item).children.index(item)
         else:
             return next(index for index, iid in enumerate(self.get_children("")) if iid == item)
 
@@ -6349,20 +6364,14 @@ class Sheet(tk.Frame):
             **{k: v["dropdown"] for k, v in self.MT.row_options.items() if "dropdown" in v},
             **{k: v["dropdown"] for k, v in self.MT.col_options.items() if "dropdown" in v},
         }
-        if "dropdown" in self.MT.options:
-            return {**d, "dropdown": self.MT.options["dropdown"]}
         return d
 
     def get_header_dropdowns(self) -> dict:
         d = {k: v["dropdown"] for k, v in self.CH.cell_options.items() if "dropdown" in v}
-        if "dropdown" in self.CH.options:
-            return {**d, "dropdown": self.CH.options["dropdown"]}
         return d
 
     def get_index_dropdowns(self) -> dict:
         d = {k: v["dropdown"] for k, v in self.RI.cell_options.items() if "dropdown" in v}
-        if "dropdown" in self.RI.options:
-            return {**d, "dropdown": self.RI.options["dropdown"]}
         return d
 
     def set_dropdown_values(

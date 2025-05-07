@@ -481,10 +481,10 @@ class Node:
         parent: str = "",
         children: list[str] | None = None,
     ) -> None:
-        self.text = text
-        self.iid = iid
-        self.parent = parent
-        self.children = children if children else []
+        self.text: str = text
+        self.iid: str = iid
+        self.parent: str = parent
+        self.children: list[str] = children if children else []
 
 
 class StorageBase:

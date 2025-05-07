@@ -853,18 +853,6 @@ def insert_items(
     return seq
 
 
-def del_placeholder_dict_key(
-    d: dict[Hashable, Any],
-    k: Hashable,
-    v: Any,
-    p: tuple = (),
-) -> dict[Hashable, Any]:
-    if p in d:
-        del d[p]
-    d[k] = v
-    return d
-
-
 def data_to_displayed_idxs(
     to_convert: list[int],
     displayed: list[int],
