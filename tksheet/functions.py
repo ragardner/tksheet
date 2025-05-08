@@ -1195,14 +1195,14 @@ PATTERN_ALL = re.compile(r"^:$")  # ":"
 
 def span_a2i(a: str) -> int | None:
     n = 0
-    for c in a:
+    for c in a.upper():
         n = n * 26 + ord(c) - ORD_A + 1
     return n - 1
 
 
 def span_a2n(a: str) -> int | None:
     n = 0
-    for c in a:
+    for c in a.upper():
         n = n * 26 + ord(c) - ORD_A + 1
     return n
 
@@ -1266,21 +1266,33 @@ def key_to_span(
 
         # Sequence key: various span formats
         elif isinstance(key, (list, tuple)):
-            if (
-                len(key) == 2
-                and (isinstance(key[0], int) or key[0] is None)
-                and (isinstance(key[1], int) or key[1] is None)
-            ):
-                # Single cell or partial span: (row, col)
-                r_int = isinstance(key[0], int)
-                c_int = isinstance(key[1], int)
-                return span_dict(
-                    from_r=key[0] if r_int else 0,
-                    from_c=key[1] if c_int else 0,
-                    upto_r=key[0] + 1 if r_int else None,
-                    upto_c=key[1] + 1 if c_int else None,
-                    widget=widget,
-                )
+            if len(key) == 2:
+                if (isinstance(key[0], int) or key[0] is None) and (isinstance(key[1], int) or key[1] is None):
+                    # Single cell or partial span: (row, col)
+                    r_int = isinstance(key[0], int)
+                    c_int = isinstance(key[1], int)
+                    return span_dict(
+                        from_r=key[0] if r_int else 0,
+                        from_c=key[1] if c_int else 0,
+                        upto_r=key[0] + 1 if r_int else None,
+                        upto_c=key[1] + 1 if c_int else None,
+                        widget=widget,
+                    )
+
+                elif isinstance(key[0], int) and isinstance(key[1], str):
+                    # Single cell with column letter: (row 0, col A)
+                    c_int = span_a2i(key[1])
+                    return span_dict(
+                        from_r=key[0],
+                        from_c=c_int,
+                        upto_r=key[0] + 1,
+                        upto_c=c_int + 1,
+                        widget=widget,
+                    )
+
+                else:
+                    return f"'{key}' could not be converted to span."
+
             elif len(key) == 4:
                 # Full span coordinates: (from_r, from_c, upto_r, upto_c)
                 return coords_to_span(
@@ -1327,11 +1339,12 @@ def key_to_span(
                     widget=widget,
                 )
             elif m := PATTERN_COL.match(key):
+                c_int = span_a2i(m[1])
                 return span_dict(
                     from_r=None,
-                    from_c=span_a2i(m[1]),
+                    from_c=c_int,
                     upto_r=None,
-                    upto_c=span_a2n(m[1]),
+                    upto_c=c_int + 1,
                     widget=widget,
                 )
             elif m := PATTERN_CELL.match(key):

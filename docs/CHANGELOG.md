@@ -1,3 +1,7 @@
+### Version 7.5.5
+#### Fixed:
+- Improve span creation for lower case letters and two-tuple keys with a column letter.
+
 ### Version 7.5.4
 #### Addressed:
 - [#297](https://github.com/ragardner/tksheet/issues/297). More work is likely required but this is an improvement.
