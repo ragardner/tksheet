@@ -4750,25 +4750,25 @@ class Sheet(tk.Frame):
             if isinstance(index, int):
                 index = min(index, len(chn))
                 if index == 0:
-                    datarn = self.RI.rns[parent] + 1
+                    return self.RI.rns[parent] + 1
                 else:
                     prev_chld = chn[index - 1]
-                    datarn = self.RI.rns[prev_chld] + self.RI.num_descendants(prev_chld) + 1
+                    return self.RI.rns[prev_chld] + self.RI.num_descendants(prev_chld) + 1
             else:
                 if chn:
                     last_chld = chn[-1]
                     last_chld_rn = self.RI.rns[last_chld]
-                    datarn = last_chld_rn + self.RI.num_descendants(last_chld) + 1
+                    return last_chld_rn + self.RI.num_descendants(last_chld) + 1
                 else:
-                    datarn = self.RI.rns[parent] + 1
+                    return self.RI.rns[parent] + 1
         else:
             if isinstance(index, int):
-                datarn = index
-                if index and (datarn := self.top_index_row(index)) is None:
-                    datarn = len(self.MT._row_index)
+                if index == 0:
+                    return 0
+                datarn = self.top_index_row(index)
+                return len(self.MT._row_index) if datarn is None else datarn
             else:
-                datarn = len(self.MT._row_index)
-        return datarn
+                return len(self.MT._row_index)
 
     def bulk_insert(
         self,
