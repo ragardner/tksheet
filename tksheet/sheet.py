@@ -4755,7 +4755,13 @@ class Sheet(tk.Frame):
                     + sum(self.RI.num_descendants(cid) for cid in islice(self.get_children(parent), index))
                 )
             else:
-                datarn = self.RI.rns[parent] + self.RI.num_descendants(parent) + 1
+                chn = self.RI.iid_children(parent)
+                if chn:
+                    last_chld = chn[-1]
+                    last_chld_rn = self.RI.rns[last_chld]
+                    datarn = last_chld_rn + self.RI.num_descendants(last_chld) + 1
+                else:
+                    datarn = self.RI.rns[parent] + 1
         else:
             if isinstance(index, int):
                 datarn = index
