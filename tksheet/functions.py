@@ -765,6 +765,14 @@ def add_to_displayed(displayed: list[int], to_add: Iterable[int]) -> list[int]:
     return displayed
 
 
+def push_displayed(displayed: list[int], to_add: Iterable[int]) -> list[int]:
+    # assumes to_add is sorted
+    for i in to_add:
+        ins = bisect_left(displayed, i)
+        displayed[ins:] = [e + 1 for e in islice(displayed, ins, None)]
+    return displayed
+
+
 def move_elements_by_mapping(
     seq: list[Any],
     new_idxs: dict[int, int],

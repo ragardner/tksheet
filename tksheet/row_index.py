@@ -32,6 +32,7 @@ from .functions import (
     mod_event_val,
     new_tk_event,
     num2alpha,
+    push_displayed,
     rounded_box_coords,
     stored_event_dict,
     try_b_index,
@@ -2632,13 +2633,17 @@ class RowIndex(tk.Canvas):
 
             # handle displaying the new rows
             event_data["added"]["rows"]["row_heights"] = {}
+            # parent exists and it's displayed and it's open
             if parent and self.PAR.item_displayed(parent) and parent in self.tree_open_ids:
                 self.MT.displayed_rows = add_to_displayed(self.MT.displayed_rows, event_data["added"]["rows"]["index"])
                 disp_idx = self.MT.disprn(self.rns[a_node.iid])  # first node, they're contiguous because not undo
                 h = self.MT.get_default_row_height()
                 for i in range(len(event_data["added"]["rows"]["index"])):
                     event_data["added"]["rows"]["row_heights"][disp_idx + i] = h
-
+            # parent exists and either it's not displayed or not open
+            elif parent:
+                self.MT.displayed_rows = push_displayed(self.MT.displayed_rows, event_data["added"]["rows"]["index"])
+            # no parent, top level
             elif not parent:
                 self.MT.displayed_rows = add_to_displayed(self.MT.displayed_rows, event_data["added"]["rows"]["index"])
                 h = self.MT.get_default_row_height()
