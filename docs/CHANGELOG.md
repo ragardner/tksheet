@@ -1,3 +1,7 @@
+### Version 7.5.6
+#### Addressed:
+- [#299](https://github.com/ragardner/tksheet/issues/299).
+
 ### Version 7.5.5
 #### Fixed:
 - Treeview mode `insert()` function and inserting into a hidden section of the tree resulted in `displayed_rows` not being updated and incorrect row visibility in the treeview.

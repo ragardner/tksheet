@@ -904,7 +904,7 @@ class Sheet(tk.Frame):
         hdisp: bool = True,
         transposed: bool = False,
         ndim: int = 0,
-        convert: Any = None,
+        convert: Callable | None = None,
         undo: bool = True,
         emit_event: bool = False,
         widget: Any = None,

@@ -934,14 +934,14 @@ app.mainloop()
     show_y_scrollbar: bool = True,
     width: int | None = None,
     height: int | None = None,
-    headers: None | list[object] = None,
-    header: None | list[object] = None,
-    row_index: None | list[object] = None,
-    index: None | list[object] = None,
+    headers: None | list[Any] = None,
+    header: None | list[Any] = None,
+    row_index: None | list[Any] = None,
+    index: None | list[Any] = None,
     default_header: Literal[&quot;letters&quot;, &quot;numbers&quot;, &quot;both&quot;] | None = &quot;letters&quot;,
     default_row_index: Literal[&quot;letters&quot;, &quot;numbers&quot;, &quot;both&quot;] | None = &quot;numbers&quot;,
-    data_reference: None | Sequence[Sequence[object]] = None,
-    data: None | Sequence[Sequence[object]] = None,
+    data_reference: None | Sequence[Sequence[Any]] = None,
+    data: None | Sequence[Sequence[Any]] = None,
     # either (start row, end row, &quot;rows&quot;), (start column, end column, &quot;rows&quot;) or
     # (cells start row, cells start column, cells end row, cells end column, &quot;cells&quot;)  # noqa: E501
     startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
@@ -957,21 +957,21 @@ app.mainloop()
     max_row_height: float = float(&quot;inf&quot;),
     max_header_height: float = float(&quot;inf&quot;),
     max_index_width: float = float(&quot;inf&quot;),
-    after_redraw_time_ms: int = 20,
+    after_redraw_time_ms: int = 16,
     set_all_heights_and_widths: bool = False,
     zoom: int = 100,
-    align: str = &quot;w&quot;,
-    header_align: str = &quot;center&quot;,
+    align: str = &quot;nw&quot;,
+    header_align: str = &quot;n&quot;,
     row_index_align: str | None = None,
-    index_align: str = &quot;center&quot;,
-    displayed_columns: list[int] = [],
+    index_align: str = &quot;n&quot;,
+    displayed_columns: list[int] | None = None,
     all_columns_displayed: bool = True,
-    displayed_rows: list[int] = [],
+    displayed_rows: list[int] | None = None,
     all_rows_displayed: bool = True,
     to_clipboard_delimiter: str = &quot;\t&quot;,
     to_clipboard_quotechar: str = '&quot;',
     to_clipboard_lineterminator: str = &quot;\n&quot;,
-    from_clipboard_delimiters: list[str] | str = [&quot;\t&quot;],
+    from_clipboard_delimiters: list[str] | str = &quot;\t&quot;,
     show_default_header_for_empty: bool = True,
     show_default_index_for_empty: bool = True,
     page_up_down_select_row: bool = True,
@@ -1022,18 +1022,19 @@ app.mainloop()
     edit_cell_return: Literal[&quot;right&quot;, &quot;down&quot;, &quot;&quot;] = &quot;down&quot;,
     editor_del_key: Literal[&quot;forward&quot;, &quot;backward&quot;, &quot;&quot;] = &quot;forward&quot;,
     treeview: bool = False,
-    treeview_indent: str | int = &quot;5&quot;,
+    treeview_indent: str | int = &quot;2&quot;,
     rounded_boxes: bool = True,
     alternate_color: str = &quot;&quot;,
     allow_cell_overflow: bool = False,
-    table_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,  # &quot;&quot; no wrap, &quot;w&quot; word wrap, &quot;c&quot; char wrap
-    index_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,  # &quot;&quot; no wrap, &quot;w&quot; word wrap, &quot;c&quot; char wrap
-    header_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,  # &quot;&quot; no wrap, &quot;w&quot; word wrap, &quot;c&quot; char wrap
+    # &quot;&quot; no wrap, &quot;w&quot; word wrap, &quot;c&quot; char wrap
+    table_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,
+    index_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,
+    header_wrap: Literal[&quot;&quot;, &quot;w&quot;, &quot;c&quot;] = &quot;c&quot;,
     sort_key: Callable = natural_sort_key,
     # colors
     outline_thickness: int = 0,
-    outline_color: str = theme_light_blue[&quot;outline_color&quot;],
     theme: str = &quot;light blue&quot;,
+    outline_color: str = theme_light_blue[&quot;outline_color&quot;],
     frame_bg: str = theme_light_blue[&quot;table_bg&quot;],
     popup_menu_fg: str = theme_light_blue[&quot;popup_menu_fg&quot;],
     popup_menu_bg: str = theme_light_blue[&quot;popup_menu_bg&quot;],
@@ -1103,10 +1104,6 @@ app.mainloop()
     horizontal_scroll_troughrelief: str = theme_light_blue[&quot;horizontal_scroll_troughrelief&quot;],
     vertical_scroll_bordercolor: str = theme_light_blue[&quot;vertical_scroll_bordercolor&quot;],
     horizontal_scroll_bordercolor: str = theme_light_blue[&quot;horizontal_scroll_bordercolor&quot;],
-    vertical_scroll_borderwidth: int = 1,
-    horizontal_scroll_borderwidth: int = 1,
-    vertical_scroll_gripcount: int = 0,
-    horizontal_scroll_gripcount: int = 0,
     vertical_scroll_active_bg: str = theme_light_blue[&quot;vertical_scroll_active_bg&quot;],
     horizontal_scroll_active_bg: str = theme_light_blue[&quot;horizontal_scroll_active_bg&quot;],
     vertical_scroll_not_active_bg: str = theme_light_blue[&quot;vertical_scroll_not_active_bg&quot;],
@@ -1119,6 +1116,10 @@ app.mainloop()
     horizontal_scroll_not_active_fg: str = theme_light_blue[&quot;horizontal_scroll_not_active_fg&quot;],
     vertical_scroll_pressed_fg: str = theme_light_blue[&quot;vertical_scroll_pressed_fg&quot;],
     horizontal_scroll_pressed_fg: str = theme_light_blue[&quot;horizontal_scroll_pressed_fg&quot;],
+    vertical_scroll_borderwidth: int = 1,
+    horizontal_scroll_borderwidth: int = 1,
+    vertical_scroll_gripcount: int = 0,
+    horizontal_scroll_gripcount: int = 0,
     scrollbar_theme_inheritance: str = &quot;default&quot;,
     scrollbar_show_arrows: bool = True,
     # changing the arrowsize (width) of the scrollbars
@@ -1126,6 +1127,7 @@ app.mainloop()
     # use 'clam' theme instead if you want to change the width
     vertical_scroll_arrowsize: str | int = &quot;&quot;,
     horizontal_scroll_arrowsize: str | int = &quot;&quot;,
+    **kwargs,
 ) -&gt; None
 </code></pre>
 <ul>
@@ -1746,19 +1748,19 @@ sheet.set_options(**kwargs)
 <hr />
 <h1 id="header-and-index"><strong>Header and Index</strong></h1>
 <h4 id="set-the-header"><strong>Set the header</strong></h4>
-<pre><code class="language-python">set_header_data(value: object, c: int | None | Iterator = None, redraw: bool = True) -&gt; Sheet
+<pre><code class="language-python">set_header_data(value: Any, c: int | None | Iterator = None, redraw: bool = True) -&gt; Sheet
 </code></pre>
 <ul>
 <li><code>value</code> (<code>iterable</code>, <code>int</code>, <code>Any</code>) if <code>c</code> is left as <code>None</code> then it attempts to set the whole header as the <code>value</code> (converting a generator to a list). If <code>value</code> is <code>int</code> it sets the header to display the row with that position.</li>
 <li><code>c</code> (<code>iterable</code>, <code>int</code>, <code>None</code>) if both <code>value</code> and <code>c</code> are iterables it assumes <code>c</code> is an iterable of positions and <code>value</code> is an iterable of values and attempts to set each value to each position. If <code>c</code> is <code>int</code> it attempts to set the value at that position.</li>
 </ul>
 <pre><code class="language-python">headers(
-    newheaders: object = None,
+    newheaders: Any = None,
     index: None | int = None,
     reset_col_positions: bool = False,
     show_headers_if_not_sheet: bool = True,
     redraw: bool = True,
-) -&gt; object
+) -&gt; Any
 </code></pre>
 <ul>
 <li>Using an integer <code>int</code> for argument <code>newheaders</code> makes the sheet use that row as a header e.g. <code>headers(0)</code> means the first row will be used as a header (the first row will not be hidden in the sheet though), this is sort of equivalent to freezing the row.</li>
@@ -1767,19 +1769,19 @@ sheet.set_options(**kwargs)
 </ul>
 <hr />
 <h4 id="set-the-index"><strong>Set the index</strong></h4>
-<pre><code class="language-python">set_index_data(value: object, r: int | None | Iterator = None, redraw: bool = True) -&gt; Sheet
+<pre><code class="language-python">set_index_data(value: Any, r: int | None | Iterator = None, redraw: bool = True) -&gt; Sheet
 </code></pre>
 <ul>
 <li><code>value</code> (<code>iterable</code>, <code>int</code>, <code>Any</code>) if <code>r</code> is left as <code>None</code> then it attempts to set the whole index as the <code>value</code> (converting a generator to a list). If <code>value</code> is <code>int</code> it sets the index to display the row with that position.</li>
 <li><code>r</code> (<code>iterable</code>, <code>int</code>, <code>None</code>) if both <code>value</code> and <code>r</code> are iterables it assumes <code>r</code> is an iterable of positions and <code>value</code> is an iterable of values and attempts to set each value to each position. If <code>r</code> is <code>int</code> it attempts to set the value at that position.</li>
 </ul>
 <pre><code class="language-python">row_index(
-    newindex: object = None,
+    newindex: Any = None,
     index: None | int = None,
     reset_row_positions: bool = False,
     show_index_if_not_sheet: bool = True,
     redraw: bool = True,
-) -&gt; object
+) -&gt; Any
 </code></pre>
 <ul>
 <li>Using an integer <code>int</code> for argument <code>newindex</code> makes the sheet use that column as an index e.g. <code>row_index(0)</code> means the first column will be used as an index (the first column will not be hidden in the sheet though), this is sort of equivalent to freezing the column.</li>
@@ -2374,12 +2376,12 @@ app.mainloop()
 </code></pre>
 <hr />
 <p>These functions are links to the Sheets own functionality. Functions such as <code>cut()</code> rely on whatever is currently selected on the Sheet.</p>
-<pre><code class="language-python">cut(event: object = None) -&gt; Sheet
-copy(event: object = None) -&gt; Sheet
-paste(event: object = None) -&gt; Sheet
-delete(event: object = None) -&gt; Sheet
-undo(event: object = None) -&gt; Sheet
-redo(event: object = None) -&gt; Sheet
+<pre><code class="language-python">cut(event: Any = None) -&gt; Sheet
+copy(event: Any = None) -&gt; Sheet
+paste(event: Any = None) -&gt; Sheet
+delete(event: Any = None) -&gt; Sheet
+undo(event: Any = None) -&gt; Sheet
+redo(event: Any = None) -&gt; Sheet
 zoom_in() -&gt; Sheet
 zoom_out() -&gt; Sheet
 </code></pre>
@@ -2818,10 +2820,10 @@ app.mainloop()
     hdisp: bool = True,
     transposed: bool = False,
     ndim: int = 0,
-    convert: object = None,
+    convert: Callable | None = None,
     undo: bool = True,
     emit_event: bool = False,
-    widget: object = None,
+    widget: Any = None,
     expand: None | str = None,
     formatter_options: dict | None = None,
     **kwargs,
@@ -2865,7 +2867,7 @@ Returns the created span
 <li><code>convert</code> (<code>None</code>, <code>Callable</code>) can be used to modify the data using a function before returning it. The data sent to the <code>convert</code> function will be as it was before normally returning (after <code>ndim</code> has potentially modified it).</li>
 <li><code>undo</code> (<code>bool</code>) is used by data modifying functions that utilize spans. When <code>True</code> and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.</li>
 <li><code>emit_event</code> when <code>True</code> and when using data setting functions that utilize spans causes a <code>"&lt;&lt;SheetModified&gt;&gt;</code> event to occur if it has been bound, see <a href="#tkinter-and-tksheet-events">here</a> for more information on binding this event.</li>
-<li><code>widget</code> (<code>object</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
+<li><code>widget</code> (<code>Any</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
 <li><code>expand</code> (<code>None</code>, <code>str</code>) must be either <code>None</code> or:<ul>
 <li><code>"table"</code>/<code>"both"</code> expand the span both down and right from the span start to the ends of the table.</li>
 <li><code>"right"</code> expand the span right to the end of the table <code>x</code> axis.</li>
@@ -3097,7 +3099,7 @@ print (len(span.rows))
     convert: Callable | None = None,
     undo: bool | None = None,
     emit_event: bool | None = None,
-    widget: object = None,
+    widget: Any = None,
     expand: str | None = None,
     formatter_options: dict | None = None,
     **kwargs,
@@ -3127,7 +3129,7 @@ print (len(span.rows))
 <li><code>convert</code> (<code>Callable</code>, <code>None</code>) can be used to modify the data using a function before returning it. The data sent to the <code>convert</code> function will be as it was before normally returning (after <code>ndim</code> has potentially modified it).</li>
 <li><code>undo</code> (<code>bool</code>, <code>None</code>) is used by data modifying functions that utilize spans. When <code>True</code> and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.</li>
 <li><code>emit_event</code> (<code>bool</code>, <code>None</code>) is used by data modifying functions that utilize spans. When <code>True</code> causes a <code>"&lt;&lt;SheetModified&gt;&gt;</code> event to occur if it has been bound, see <a href="#tkinter-and-tksheet-events">here</a> for more information.</li>
-<li><code>widget</code> (<code>object</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
+<li><code>widget</code> (<code>Any</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
 <li><code>expand</code> (<code>str</code>, <code>None</code>) must be either <code>None</code> or:<ul>
 <li><code>"table"</code>/<code>"both"</code> expand the span both down and right from the span start to the ends of the table.</li>
 <li><code>"right"</code> expand the span right to the end of the table <code>x</code> axis.</li>
@@ -3182,7 +3184,7 @@ span = sheet[&quot;A1&quot;].options(
 <li><code>convert</code> (<code>None</code>, <code>Callable</code>) can be used to modify the data using a function before returning it. The data sent to the <code>convert</code> function will be as it was before normally returning (after <code>ndim</code> has potentially modified it).</li>
 <li><code>undo</code> (<code>bool</code>) is used by data modifying functions that utilize spans. When <code>True</code> and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.</li>
 <li><code>emit_event</code> (<code>bool</code>) is used by data modifying functions that utilize spans. When <code>True</code> causes a <code>"&lt;&lt;SheetModified&gt;&gt;</code> event to occur if it has been bound, see <a href="#tkinter-and-tksheet-events">here</a> for more information.</li>
-<li><code>widget</code> (<code>object</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
+<li><code>widget</code> (<code>Any</code>) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
 <li><code>kwargs</code> a <code>dict</code> containing keyword arguments relevant for functions such as <code>span.highlight()</code> or <code>span.dropdown()</code> which are used when applying a named span to a table.</li>
 </ul>
 <p>If necessary you can also modify these attributes the same way you would an objects. e.g.</p>
@@ -3198,7 +3200,7 @@ span.undo = True
 <p>Formats table data, see the help on <a href="#data-formatting">formatting</a> for more information. Note that using this function also creates a format rule for the affected table cells.</p>
 <pre><code class="language-python">span.format(
     formatter_options: dict = {},
-    formatter_class: object = None,
+    formatter_class: Any = None,
     redraw: bool = True,
     **kwargs,
 ) -&gt; Span
@@ -3260,7 +3262,7 @@ span1.dehighlight()
 <p>Creates dropdown boxes for parts of the sheet that are covered by the span. For more information see <a href="#dropdown-boxes">here</a>.</p>
 <pre><code class="language-python">span.dropdown(
     values: list = [],
-    set_value: object = None,
+    set_value: Any = None,
     state: Literal[&quot;normal&quot;, &quot;readonly&quot;, &quot;disabled&quot;] = &quot;normal&quot;,
     redraw: bool = True,
     selection_function: Callable | None = None,
@@ -3577,7 +3579,7 @@ cell_a1_data = span.data
 </ul>
 </li>
 <li><code>convert</code> (<code>None</code>, <code>Callable</code>) can be used to modify the data using a function before returning it. The data sent to the <code>convert</code> function will be as it was before normally returning (after <code>ndim</code> has potentially modified it).</li>
-<li><code>widget</code> (<code>object</code>) is the reference to the original sheet which created the span (this is the widget that data is retrieved from). This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
+<li><code>widget</code> (<code>Any</code>) is the reference to the original sheet which created the span (this is the widget that data is retrieved from). This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</li>
 </ul>
 <p>Some more complex examples of data retrieval:</p>
 <pre><code class="language-python">&quot;single cell&quot;
@@ -3612,7 +3614,7 @@ sheet_data = self.sheet.span(transposed=True, hdisp=False, header=True).data
 <p>There is also a <code>Sheet()</code> function for data retrieval (it is used internally by the above data getting methods):</p>
 <pre><code class="language-python">sheet.get_data(
     *key: CreateSpanTypes,
-) -&gt; object
+) -&gt; Any
 </code></pre>
 <p>Examples:</p>
 <pre><code class="language-python">data = self.sheet.get_data(&quot;A1&quot;)
@@ -3623,7 +3625,7 @@ data = self.sheet.get_data(
 </code></pre>
 <h4 id="get-a-single-cells-data"><strong>Get a single cells data</strong></h4>
 <p>This is a higher performance method to get a single cells data which may be useful for example when performing a very large number of single cell data retrievals in a loop.</p>
-<pre><code class="language-python">get_cell_data(r: int, c: int, get_displayed: bool = False) -&gt; object
+<pre><code class="language-python">get_cell_data(r: int, c: int, get_displayed: bool = False) -&gt; Any
 </code></pre>
 <ul>
 <li><code>get_displayed</code> (<code>bool</code>) when <code>True</code> retrieves the value that is displayed to the user in the sheet, not the underlying data.</li>
@@ -3639,7 +3641,7 @@ data = self.sheet.get_data(
     get_header_displayed: bool = True,
     only_rows: int | Iterator[int] | None = None,
     only_columns: int | Iterator[int] | None = None,
-) -&gt; Iterator[list[object]]
+) -&gt; Iterator[list[Any]]
 </code></pre>
 <p>Parameters:</p>
 <ul>
@@ -3701,7 +3703,7 @@ print (search_value in self.sheet)
     c: int,
     r_ops: bool = True,
     c_ops: bool = True,
-) -&gt; object
+) -&gt; Any
 </code></pre>
 <ul>
 <li><code>r_ops</code>/<code>c_ops</code> when both are <code>True</code> it will take into account whatever cell/row/column options exist. When just <code>r_ops</code> is <code>True</code> it will take into account row options only and when just <code>c_ops</code> is <code>True</code> it will take into account column options only.</li>
@@ -3723,7 +3725,7 @@ print (search_value in self.sheet)
     reset_highlights: bool = False,
     keep_formatting: bool = True,
     delete_options: bool = False,
-) -&gt; object
+) -&gt; Any
 </code></pre>
 <p>Parameters:</p>
 <ul>
@@ -3741,7 +3743,7 @@ print (search_value in self.sheet)
 </ul>
 <hr />
 <pre><code class="language-python">@data.setter
-data(value: object)
+data(value: Any)
 </code></pre>
 <p>Notes:</p>
 <ul>
@@ -3817,7 +3819,7 @@ self.sheet.span(&quot;A1&quot;).data = &quot;new value for cell A1&quot;
 - <code>transposed</code> (<code>bool</code>) is used by data getting and setting functions that utilize spans. When <code>True</code>:
     - Returned sublists from data getting functions will represent columns rather than rows.
     - <strong>Data setting</strong> functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
-- <code>widget</code> (<code>object</code>) is the reference to the original sheet which created the span (this is the widget that data is set to). This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</p>
+- <code>widget</code> (<code>Any</code>) is the reference to the original sheet which created the span (this is the widget that data is set to). This can be changed to a different sheet if required e.g. <code>my_span.widget = new_sheet</code>.</p>
 <p>Some more complex examples of setting data:</p>
 <pre><code class="language-python">&quot;&quot;&quot;
 SETTING ROW DATA
@@ -3889,7 +3891,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <p>You can also use the <code>Sheet</code> function <code>set_data()</code>.</p>
 <pre><code class="language-python">set_data(
     *key: CreateSpanTypes,
-    data: object = None,
+    data: Any = None,
     undo: bool | None = None,
     emit_event: bool | None = None,
     redraw: bool = True,
@@ -3923,7 +3925,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 </ul>
 <h4 id="insert-a-row-into-the-sheet"><strong>Insert a row into the sheet</strong></h4>
 <pre><code class="language-python">insert_row(
-    row: list[object] | tuple[object] | None = None,
+    row: list[Any] | tuple[Any] | None = None,
     idx: str | int | None = None,
     height: int | None = None,
     row_index: bool = False,
@@ -3945,7 +3947,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <hr />
 <h4 id="insert-a-column-into-the-sheet"><strong>Insert a column into the sheet</strong></h4>
 <pre><code class="language-python">insert_column(
-    column: list[object] | tuple[object] | None = None,
+    column: list[Any] | tuple[Any] | None = None,
     idx: str | int | None = None,
     width: int | None = None,
     header: bool = False,
@@ -3967,7 +3969,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <hr />
 <h4 id="insert-multiple-columns-into-the-sheet"><strong>Insert multiple columns into the sheet</strong></h4>
 <pre><code class="language-python">insert_columns(
-    columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+    columns: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
     idx: str | int | None = None,
     widths: list[int] | tuple[int] | None = None,
     headers: bool = False,
@@ -3996,7 +3998,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <hr />
 <h4 id="insert-multiple-rows-into-the-sheet"><strong>Insert multiple rows into the sheet</strong></h4>
 <pre><code class="language-python">insert_rows(
-    rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+    rows: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
     idx: str | int | None = None,
     heights: list[int] | tuple[int] | None = None,
     row_index: bool = False,
@@ -4675,8 +4677,8 @@ self.sheet.dehighlight(&quot;B&quot;)
     *key: CreateSpanTypes,
     values: list = [],
     edit_data: bool = True,
-    set_values: dict[tuple[int, int] | int, object] | None = None,
-    set_value: object = None,
+    set_values: dict[tuple[int, int] | int, Any] | None = None,
+    set_value: Any = None,
     state: Literal[&quot;normal&quot;, &quot;readonly&quot;, &quot;disabled&quot;] = &quot;normal&quot;,
     redraw: bool = True,
     selection_function: Callable | None = None,
@@ -4757,21 +4759,21 @@ self.sheet.del_dropdown(&quot;D&quot;)
     c: int = 0,
     set_existing_dropdown: bool = False,
     values: list = [],
-    set_value: object = None,
+    set_value: Any = None,
 ) -&gt; Sheet
 </code></pre>
 <pre><code class="language-python">set_header_dropdown_values(
     c: int = 0,
     set_existing_dropdown: bool = False,
     values: list = [],
-    set_value: object = None,
+    set_value: Any = None,
 ) -&gt; Sheet
 </code></pre>
 <pre><code class="language-python">set_index_dropdown_values(
     r: int = 0,
     set_existing_dropdown: bool = False,
     values: list = [],
-    set_value: object = None,
+    set_value: Any = None,
 ) -&gt; Sheet
 </code></pre>
 <p>Parameters:</p>
@@ -4933,7 +4935,10 @@ self.sheet.del_checkbox(&quot;D&quot;)
 <p>Data formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype.</p>
 <p>Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data.</p>
 <p>tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.</p>
-<p>A demonstration of all the built-in and custom formatters can be found <a href="#example-using-and-creating-formatters">here</a>.</p>
+<ul>
+<li>An full explanation of what arguments to use for the <code>formatter_options</code> parameter can be found <a href="#generic-formatter">here</a>.</li>
+<li>A demonstration of all the built-in and custom formatters can be found <a href="#example-using-and-creating-formatters">here</a>.</li>
+</ul>
 <h3 id="creation-and-deletion-of-data-formatting-rules"><strong>Creation and deletion of data formatting rules</strong></h3>
 <h4 id="creating-a-data-format-rule"><strong>Creating a data format rule</strong></h4>
 <p><code>Span</code> objects (more information <a href="#span-objects">here</a>) can be used to format data for cells, rows, columns and the entire sheet.</p>
@@ -4945,7 +4950,7 @@ self.sheet.del_checkbox(&quot;D&quot;)
 <pre><code class="language-python">format(
     *key: CreateSpanTypes,
     formatter_options: dict = {},
-    formatter_class: object = None,
+    formatter_class: Any = None,
     redraw: bool = True,
     **kwargs,
 ) -&gt; Span
@@ -5068,15 +5073,15 @@ app = demo()
 app.mainloop()
 </code></pre>
 <p><strong>You can use any of the following formatters as an argument for the parameter <code>formatter_options</code>.</strong></p>
-<p>A full list of keyword arguments available to these formatters is shown <a href="#generic-formatter">here</a>.</p>
+<p>A full list of keyword arguments available to these formatters is described <a href="#generic-formatter">here</a>.</p>
 <hr />
 <h4 id="int-formatter"><strong>Int Formatter</strong></h4>
 <p>The <code>int_formatter</code> is the basic configuration for a simple interger formatter.</p>
 <pre><code class="language-python">int_formatter(
-    datatypes: tuple[object] | object = int,
+    datatypes: tuple[Any] | Any = int,
     format_function: Callable = to_int,
     to_str_function: Callable = to_str,
-    invalid_value: object = &quot;NaN&quot;,
+    invalid_value: Any = &quot;NaN&quot;,
     **kwargs,
 ) -&gt; dict
 </code></pre>
@@ -5084,6 +5089,7 @@ app.mainloop()
 <ul>
 <li><code>format_function</code> (<code>function</code>) a function that takes a string and returns an <code>int</code>. By default, this is set to the in-built <code>tksheet.to_int</code>. This function will always convert float-likes to its floor, for example <code>"5.9"</code> will be converted to <code>5</code>.</li>
 <li><code>to_str_function</code> (<code>function</code>) By default, this is set to the in-built <code>tksheet.to_str</code>, which is a very basic function that will displace the default string representation of the value.</li>
+<li>A full explanation of keyword arguments available is described <a href="#generic-formatter">here</a>.</li>
 </ul>
 <p>Example:</p>
 <pre><code class="language-python">sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter())
@@ -5092,10 +5098,10 @@ app.mainloop()
 <h4 id="float-formatter"><strong>Float Formatter</strong></h4>
 <p>The <code>float_formatter</code> is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example <code>"5.999"</code> will be converted to <code>"6.0"</code> if <code>decimals = 1</code>.</p>
 <pre><code class="language-python">float_formatter(
-    datatypes: tuple[object] | object = float,
+    datatypes: tuple[Any] | Any = float,
     format_function: Callable = to_float,
     to_str_function: Callable = float_to_str,
-    invalid_value: object = &quot;NaN&quot;,
+    invalid_value: Any = &quot;NaN&quot;,
     decimals: int = 2,
     **kwargs
 ) -&gt; dict
@@ -5105,6 +5111,7 @@ app.mainloop()
 <li><code>format_function</code> (<code>function</code>) a function that takes a string and returns a <code>float</code>. By default, this is set to the in-built <code>tksheet.to_float</code>.</li>
 <li><code>to_str_function</code> (<code>function</code>) By default, this is set to the in-built <code>tksheet.float_to_str</code>, which will display the float to the specified number of decimal places.</li>
 <li><code>decimals</code> (<code>int</code>, <code>None</code>) the number of decimal places to round to. Defaults to <code>2</code>.</li>
+<li>A full explanation of keyword arguments available is described <a href="#generic-formatter">here</a>.</li>
 </ul>
 <p>Example:</p>
 <pre><code class="language-python">sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
@@ -5113,10 +5120,10 @@ app.mainloop()
 <h4 id="percentage-formatter"><strong>Percentage Formatter</strong></h4>
 <p>The <code>percentage_formatter</code> is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example <code>"5.999%"</code> will be converted to <code>"6.0%"</code> if <code>decimals = 1</code>.</p>
 <pre><code class="language-python">percentage_formatter(
-    datatypes: tuple[object] | object = float,
+    datatypes: tuple[Any] | Any = float,
     format_function: Callable = to_percentage,
     to_str_function: Callable = percentage_to_str,
-    invalid_value: object = &quot;NaN&quot;,
+    invalid_value: Any = &quot;NaN&quot;,
     decimals: int = 0,
     **kwargs,
 ) -&gt; dict
@@ -5126,6 +5133,7 @@ app.mainloop()
 <li><code>format_function</code> (<code>function</code>) a function that takes a string and returns a <code>float</code>. By default, this is set to the in-built <code>tksheet.to_percentage</code>. This function will always convert percentages to their decimal equivalent, for example <code>"5%"</code> will be converted to <code>0.05</code>.</li>
 <li><code>to_str_function</code> (<code>function</code>) By default, this is set to the in-built <code>tksheet.percentage_to_str</code>, which will display the float as a percentage to the specified number of decimal places. For example, <code>0.05</code> will be displayed as <code>"5.0%"</code>.</li>
 <li><code>decimals</code> (<code>int</code>) the number of decimal places to round to. Defaults to <code>0</code>.</li>
+<li>A full explanation of keyword arguments available is described <a href="#generic-formatter">here</a>.</li>
 </ul>
 <p>Example:</p>
 <pre><code class="language-python">sheet.format_cell(0, 0, formatter_options=tksheet.percentage_formatter(decimals=1)) # A percentage formatter with 1 decimal place
@@ -5148,10 +5156,10 @@ sheet.format(
 <hr />
 <h4 id="bool-formatter"><strong>Bool Formatter</strong></h4>
 <pre><code class="language-python">bool_formatter(
-    datatypes: tuple[object] | object = bool,
+    datatypes: tuple[Any] | Any = bool,
     format_function: Callable = to_bool,
     to_str_function: Callable = bool_to_str,
-    invalid_value: object = &quot;NA&quot;,
+    invalid_value: Any = &quot;NA&quot;,
     truthy: set = truthy,
     falsy: set = falsy,
     **kwargs,
@@ -5163,6 +5171,7 @@ sheet.format(
 <li><code>to_str_function</code> (<code>function</code>) By default, this is set to the in-built <code>tksheet.bool_to_str</code>, which will display the boolean as <code>"True"</code> or <code>"False"</code>.</li>
 <li><code>truthy</code> (<code>set</code>) a set of values that will be converted to <code>True</code>. Defaults to the in-built <code>tksheet.truthy</code>.</li>
 <li><code>falsy</code> (<code>set</code>) a set of values that will be converted to <code>False</code>. Defaults to the in-built <code>tksheet.falsy</code>.</li>
+<li>A full explanation of keyword arguments available is described <a href="#generic-formatter">here</a>.</li>
 </ul>
 <p>Example:</p>
 <pre><code class="language-python"># A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
@@ -5171,10 +5180,10 @@ sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksh
 <hr />
 <h4 id="generic-formatter"><strong>Generic Formatter</strong></h4>
 <pre><code class="language-python">formatter(
-    datatypes: tuple[object] | object,
+    datatypes: tuple[Any] | Any,
     format_function: Callable,
     to_str_function: Callable = to_str,
-    invalid_value: object = &quot;NaN&quot;,
+    invalid_value: Any = &quot;NaN&quot;,
     nullable: bool = True,
     pre_format_function: Callable | None = None,
     post_format_function: Callable | None = None,
@@ -5186,14 +5195,41 @@ sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksh
 <p>Note that all these options can also be passed to the <code>Sheet()</code> format functions as keyword arguments and are available as attributes for all formatters.</p>
 <p>You can also provide functions of your own creation for all the below arguments which take functions if you require.</p>
 <ul>
-<li><code>datatypes</code> (<code>list</code>) a list of datatypes that the formatter will accept. For example, <code>datatypes = [int, float]</code> will accept integers and floats.</li>
-<li><code>format_function</code> (<code>function</code>) a function that takes a string and returns a value of the desired datatype. For example, <code>format_function = int</code> will convert a string to an integer.</li>
-<li><code>to_str_function</code> (<code>function</code>) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, <code>to_str_function = str</code> will convert an integer to a string. Defaults to <code>tksheet.to_str</code>.</li>
-<li><code>invalid_value</code> (<code>any</code>) the value to return if the input string is invalid. For example, <code>invalid_value = "NA"</code> will return "NA" if the input string is invalid.</li>
-<li><code>nullable</code> (<code>bool</code>) if true, the formatter will accept <code>None</code> as a valid input.</li>
-<li><code>pre_format_function</code> (<code>function</code>) a function that takes a input string and returns a string. This function is called before the <code>format_function</code> and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.</li>
-<li><code>post_format_function</code> (<code>function</code>) a function that takes a value <strong>which might not be of the desired datatype, e.g. <code>None</code> if the cell is nullable and empty</strong> and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the <code>format_function</code> and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.</li>
-<li><code>clipboard_function</code> (<code>function</code>) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.</li>
+<li><code>datatypes</code> (<code>tuple[Any], Any</code>) a list of datatypes that the formatter will accept. For example, <code>datatypes=(int, float)</code> will accept integers and floats.</li>
+<li><code>format_function</code> (<code>function</code>) a function that takes a string and returns a value of the desired datatype. For example, <code>format_function = int</code> will convert a string to an integer.<ul>
+<li>Exceptions are suppressed (ignored) for this function. If an <code>Exception</code> (error) occurs then it merely continues on to the <code>post_format_function</code> (if it is <code>Callable</code>) and then finally returns the value.</li>
+</ul>
+</li>
+<li><code>invalid_value</code> (<code>Any</code>) is the value to display in the cell if the cell value's <code>type</code> is not in <code>datatypes</code>.<ul>
+<li><code>invalid_value</code> must have a <code>__str__</code> method - most python types do.</li>
+<li>Pythons <code>isinstance()</code> is used to determine the <code>type</code>.</li>
+<li><code>invalid_value</code> is also relevant if using <code>Sheet</code> data retrieval functions with <code>tdisp</code> or <code>get_displayed</code> parameters as <code>True</code> as these retrieve the displayed value.</li>
+<li>The cell's underlying value will not be set to <code>invalid_value</code> if it's invalid - it's only for display or displayed data retrieval.</li>
+</ul>
+</li>
+<li><code>to_str_function</code> (<code>function</code>) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, <code>to_str_function = str</code> will convert an integer to a string. Defaults to <code>tksheet.to_str</code>.<ul>
+<li>If the cell value's <code>type</code> is not in <code>datatypes</code> then this function will <strong>not</strong> be called, the <code>invalid_value</code> will be returned instead.</li>
+<li>If the cell's value is <code>None</code> and the format has <code>nullable=True</code> then this function will <strong>not</strong> be called, an empty <code>str</code> will be returned instead.</li>
+</ul>
+</li>
+<li><code>nullable</code> (<code>bool</code>) if <code>True</code> then it guarantees <code>type(None)</code> will be in <code>datatypes</code>, effectively allowing the cell's value to be <code>None</code>.<ul>
+<li>When <code>True</code> just before the given <code>format_function</code> is run the cell's value is checked to see if it's in a <code>set</code> named <code>nonelike</code>. You can import and modify this <code>set</code> using <code>from tksheet import nonelike</code>. If the value is in <code>nonelike</code> then it is set to <code>None</code> before being sent to the <code>format_function</code>.</li>
+<li>When <code>False</code> <code>type(None)</code> is not allowed to be in <code>datatypes</code>. If the cell for some reason ends up as <code>None</code> then it will display as the <code>invalid_value</code>.</li>
+<li>When <code>False</code> the earlier described <code>nonelike</code> check does not occur.</li>
+</ul>
+</li>
+<li><code>pre_format_function</code> (<code>function</code>) This function is called before the <code>format_function</code> and can be used to modify the cells value before it is formatted using <code>format_function</code>. This can be useful, for example, if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.<ul>
+<li>Exceptions are NOT suppressed for this function.</li>
+</ul>
+</li>
+<li><code>post_format_function</code> (<code>function</code>) a function that takes a value <strong>which might not be of the desired datatype, e.g. <code>None</code> if the cell is nullable and empty</strong> and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the <code>format_function</code> and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.<ul>
+<li>Exceptions are NOT suppressed for this function.</li>
+</ul>
+</li>
+<li><code>clipboard_function</code> (<code>function</code>) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.<ul>
+<li>Exceptions are NOT suppressed for this function.</li>
+</ul>
+</li>
 <li><code>**kwargs</code> any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the <code>format_function</code>, <code>to_str_function</code>, and the <code>clipboard_function</code>. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.</li>
 </ul>
 <hr />
@@ -5244,7 +5280,8 @@ datetime_formatter = formatter(datatypes = datetime,
 
 # From here we can pass our datetime_formatter into sheet.format() or span.format() just like any other formatter
 </code></pre>
-<p>For those wanting even more customisation of their formatters you also have the option of creating a custom formatter class. This is a more advanced topic and is not covered here, but it's recommended to create a new class which is a subclass of the <code>tksheet.Formatter</code> class and overriding the methods you would like to customise. This custom class can then be passed into the <code>format_cells()</code> <code>formatter_class</code> argument.</p>
+<p>For those wanting even more customisation of their formatters there is also the option of creating a custom formatter class.</p>
+<p>This is a more advanced topic and is not covered here, but it's recommended to create a new class which is a subclass of <code>tksheet.Formatter</code> and override the methods to customise. This custom class can then be passed to the <code>format_cells()</code> <code>formatter_class</code> parameter.</p>
 <hr />
 <h1 id="readonly-cells"><strong>Readonly Cells</strong></h1>
 <h4 id="creating-a-readonly-rule"><strong>Creating a readonly rule</strong></h4>
@@ -6126,7 +6163,7 @@ visible_columns() -&gt; tuple[int, int]
 <hr />
 <p>Determine if a tk <code>event.widget</code> is the <code>Sheet</code>.</p>
 <pre><code class="language-python">event_widget_is_sheet(
-    event: object,
+    event: Any,
     table: bool = True,
     index: bool = True,
     header: bool = True,
@@ -6148,18 +6185,18 @@ visible_columns() -&gt; tuple[int, int]
 <li>Includes child widgets such as scroll bars.</li>
 </ul>
 <hr />
-<pre><code class="language-python">identify_region(event: object) -&gt; Literal[&quot;table&quot;, &quot;index&quot;, &quot;header&quot;, &quot;top left&quot;]
+<pre><code class="language-python">identify_region(event: Any) -&gt; Literal[&quot;table&quot;, &quot;index&quot;, &quot;header&quot;, &quot;top left&quot;]
 </code></pre>
 <hr />
 <pre><code class="language-python">identify_row(
-    event: object,
+    event: Any,
     exclude_index: bool = False,
     allow_end: bool = True,
 ) -&gt; int | None
 </code></pre>
 <hr />
 <pre><code class="language-python">identify_column(
-    event: object,
+    event: Any,
     exclude_header: bool = False,
     allow_end: bool = True,
 ) -&gt; int | None
@@ -6167,12 +6204,12 @@ visible_columns() -&gt; tuple[int, int]
 <hr />
 <h4 id="sheet-control-actions"><strong>Sheet control actions</strong></h4>
 <p>For example: <code>sheet.bind("&lt;Control-B&gt;", sheet.paste)</code></p>
-<pre><code class="language-python">cut(event: object = None, validation: bool = True) -&gt; None | EventDataDict
-paste(event: object = None, validation: bool = True) -&gt; None | EventDataDict
-delete(event: object = None, validation: bool = True) -&gt; None | EventDataDict
-copy(event: object = None) -&gt; None | EventDataDict
-undo(event: object = None) -&gt; None | EventDataDict
-redo(event: object = None) -&gt; None | EventDataDict
+<pre><code class="language-python">cut(event: Any = None, validation: bool = True) -&gt; None | EventDataDict
+paste(event: Any = None, validation: bool = True) -&gt; None | EventDataDict
+delete(event: Any = None, validation: bool = True) -&gt; None | EventDataDict
+copy(event: Any = None) -&gt; None | EventDataDict
+undo(event: Any = None) -&gt; None | EventDataDict
+redo(event: Any = None) -&gt; None | EventDataDict
 </code></pre>
 <ul>
 <li><code>validation</code> (<code>bool</code>) when <code>False</code> disables any bound <code>edit_validation()</code> function from running.</li>
@@ -6180,7 +6217,7 @@ redo(event: object = None) -&gt; None | EventDataDict
 <hr />
 <h1 id="scroll-positions-and-cell-visibility"><strong>Scroll Positions and Cell Visibility</strong></h1>
 <h4 id="sync-scroll-positions-between-widgets"><strong>Sync scroll positions between widgets</strong></h4>
-<pre><code class="language-python">sync_scroll(widget: object) -&gt; Sheet
+<pre><code class="language-python">sync_scroll(widget: Any) -&gt; Sheet
 </code></pre>
 <ul>
 <li>Sync scroll positions between <code>Sheet</code>s, may or may not work with other widgets. Uses scrollbar positions.</li>
@@ -6199,7 +6236,7 @@ self.sheet1.sync_scroll(self.sheet3)
 self.sheet2.sync_scroll(self.sheet3)
 </code></pre>
 <h4 id="unsync-scroll-positions-between-widgets"><strong>Unsync scroll positions between widgets</strong></h4>
-<pre><code class="language-python">unsync_scroll(widget: object = None) -&gt; Sheet
+<pre><code class="language-python">unsync_scroll(widget: Any = None) -&gt; Sheet
 </code></pre>
 <ul>
 <li>Leaving <code>widget</code> as <code>None</code> unsyncs all previously synced widgets.</li>
@@ -6598,11 +6635,11 @@ If both arguments are <code>None</code> then table will reset to default tkinter
 </ul>
 <hr />
 <h4 id="hide-all-text-editors"><strong>Hide all text editors</strong></h4>
-<pre><code class="language-python">destroy_text_editor(event: object = None) -&gt; Sheet
+<pre><code class="language-python">destroy_text_editor(event: Any = None) -&gt; Sheet
 </code></pre>
 <hr />
 <h4 id="get-the-table-tk-text-widget-which-acts-as-the-text-editor"><strong>Get the table tk Text widget which acts as the text editor</strong></h4>
-<pre><code class="language-python">get_text_editor_widget(event: object = None) -&gt; tk.Text | None
+<pre><code class="language-python">get_text_editor_widget(event: Any = None) -&gt; tk.Text | None
 </code></pre>
 <hr />
 <h4 id="bind-additional-keys-to-the-text-editor-window"><strong>Bind additional keys to the text editor window</strong></h4>
@@ -6639,7 +6676,7 @@ my_sheet.set_options(treeview=True)
     index: None | int | Literal[&quot;end&quot;] = None,
     iid: None | str = None,
     text: None | str = None,
-    values: None | list[object] = None,
+    values: None | list[Any] = None,
     create_selections: bool = False,
     undo: bool = True,
 ) -&gt; str
@@ -6674,7 +6711,7 @@ sheet.insert(
 <hr />
 <h4 id="insert-multiple-items"><strong>Insert multiple items</strong></h4>
 <pre><code class="language-python">bulk_insert(
-    data: list[list[object]],
+    data: list[list[Any]],
     parent: str = &quot;&quot;,
     index: None | int | Literal[&quot;end&quot;] = None,
     iid_column: int | None = None,
@@ -6726,7 +6763,7 @@ sheet.bulk_insert(
 <li><strong>It resets the sheet</strong> so cannot be used to bulk add to an already existing treeview.</li>
 </ul>
 <pre><code class="language-python">tree_build(
-    data: list[list[object]],
+    data: list[list[Any]],
     iid_column: int,
     parent_column: int,
     text_column: None | int = None,

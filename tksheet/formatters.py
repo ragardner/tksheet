@@ -227,11 +227,13 @@ def data_to_str(
 ) -> str:
     if not isinstance(value, datatypes):
         return invalid_value
-    if value is None and nullable:
+    elif value is None and nullable:
         return ""
-    return to_str_function(value, **kwargs)
+    else:
+        return to_str_function(value, **kwargs)
 
 
+# Only used if MainTable.cell_str is called with get_displayed=False
 def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[Any] | Any = (), invalid_value="NA"):
     if isinstance(value, datatypes):
         return value
