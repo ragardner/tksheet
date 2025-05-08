@@ -1247,7 +1247,7 @@ def key_to_span(
         return coords_to_span(widget=widget, from_r=None, from_c=None, upto_r=None, upto_c=None)
 
     # Validate input type
-    elif not isinstance(key, (str, int, slice, list, tuple)):
+    elif not isinstance(key, (str, int, slice, tuple, list)):
         return f"Key type must be either str, int, list, tuple or slice, not '{type(key).__name__}'."
 
     try:
@@ -1273,7 +1273,7 @@ def key_to_span(
             )
 
         # Sequence key: various span formats
-        elif isinstance(key, (list, tuple)):
+        elif isinstance(key, (tuple, list)):
             if len(key) == 2:
                 if (isinstance(key[0], int) or key[0] is None) and (isinstance(key[1], int) or key[1] is None):
                     # Single cell or partial span: (row, col)
@@ -1310,7 +1310,7 @@ def key_to_span(
                     upto_r=key[2],
                     upto_c=key[3],
                 )
-            elif len(key) == 2 and all(isinstance(k, (list, tuple)) for k in key):
+            elif len(key) == 2 and all(isinstance(k, (tuple, list)) for k in key):
                 # Start and end points: ((from_r, from_c), (upto_r, upto_c))
                 return coords_to_span(
                     widget=widget,
