@@ -4746,16 +4746,15 @@ class Sheet(tk.Frame):
 
     def _get_id_insert_row(self, index: int | None, parent: str) -> int:
         if parent:
+            chn = self.RI.iid_children(parent)
             if isinstance(index, int):
-                index = min(index, len(self.RI.iid_children(parent)))
-                datarn = (
-                    self.RI.rns[parent]
-                    + index
-                    + 1
-                    + sum(self.RI.num_descendants(cid) for cid in islice(self.get_children(parent), index))
-                )
+                index = min(index, len(chn))
+                if index == 0:
+                    datarn = self.RI.rns[parent] + 1
+                else:
+                    prev_chld = chn[index - 1]
+                    datarn = self.RI.rns[prev_chld] + self.RI.num_descendants(prev_chld) + 1
             else:
-                chn = self.RI.iid_children(parent)
                 if chn:
                     last_chld = chn[-1]
                     last_chld_rn = self.RI.rns[last_chld]
