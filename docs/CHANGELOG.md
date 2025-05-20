@@ -1,3 +1,6 @@
+### Version 7.5.8
+####
+
 ### Version 7.5.7
 #### Added:
 - Notes and tooltips. Unfortunately this means that `<Enter>` and `<Leave>` have been `tag_bind()` bound to canvas `text` items.
