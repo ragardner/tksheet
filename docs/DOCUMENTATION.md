@@ -2334,6 +2334,20 @@ span = sheet[None, 0, None, None] # entire sheet
 span = sheet["A:"] # entire sheet
 ```
 
+#### **Header and index span creation using square brackets**
+
+**Header only span**
+
+```python
+span = sheet[None, 0, None, 1].options(table=False, header=True) # first column header only
+```
+
+**Index only span**
+
+```python
+span = sheet[0].options(table=False, index=True) # first row index only
+```
+
 #### **Span creation examples using sheet.span()**
 
 The same arguments as shown for [cell](#cell-span-creation-using-square-brackets), [row](#row-span-creation-using-square-brackets) and [column](#column-span-creation-using-square-brackets) span creation using square brackets can also be used for creating spans using the `Sheet.span()` function. e.g:
@@ -4266,7 +4280,9 @@ Examples:
 **Note for header cell in column `A`/`0`:**
 
 ```python
-sheet.note(None, 0, None, 1, note="This is column A, what it contains is important!")
+self.sheet.span(None, 0, None, 1).options(table=False, header=True).note(
+            "This is column A, what it contains is important!"
+        )
 ```
 
 **Note for cell `A1`/`(0, 0)`:**

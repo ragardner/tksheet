@@ -330,6 +330,7 @@
 <li><a href="#cell-span-creation-using-square-brackets">Cell span creation using square brackets</a></li>
 <li><a href="#row-span-creation-using-square-brackets">Row span creation using square brackets</a></li>
 <li><a href="#column-span-creation-using-square-brackets">Column span creation using square brackets</a></li>
+<li><a href="#header-and-index-span-creation-using-square-brackets">Header and index span creation using square brackets</a></li>
 <li><a href="#span-creation-examples-using-sheetspan">Span creation examples using sheet.span()</a></li>
 <li><a href="#retrieving-an-existing-named-span">Retrieving an existing named span</a></li>
 </ul>
@@ -2994,6 +2995,13 @@ span = sheet[&quot;C:&quot;] # from the third column
 span = sheet[None, 0, None, None] # entire sheet
 span = sheet[&quot;A:&quot;] # entire sheet
 </code></pre>
+<h4 id="header-and-index-span-creation-using-square-brackets"><strong>Header and index span creation using square brackets</strong></h4>
+<p><strong>Header only span</strong></p>
+<pre><code class="language-python">span = sheet[None, 0, None, 1].options(table=False, header=True) # first column header only
+</code></pre>
+<p><strong>Index only span</strong></p>
+<pre><code class="language-python">span = sheet[0].options(table=False, index=True) # first row index only
+</code></pre>
 <h4 id="span-creation-examples-using-sheetspan"><strong>Span creation examples using sheet.span()</strong></h4>
 <p>The same arguments as shown for <a href="#cell-span-creation-using-square-brackets">cell</a>, <a href="#row-span-creation-using-square-brackets">row</a> and <a href="#column-span-creation-using-square-brackets">column</a> span creation using square brackets can also be used for creating spans using the <code>Sheet.span()</code> function. e.g:</p>
 <ul>
@@ -4615,7 +4623,9 @@ find_open() -&gt; bool
 <p>If an existing note was created using the <code>note()</code> function or <code>Span.note()</code> function and <code>readonly</code> was set to <code>True</code> then the user will not be able to edit or delete that note even if <code>user_can_create_notes</code> is <code>True</code>.</p>
 <p>Examples:</p>
 <p><strong>Note for header cell in column <code>A</code>/<code>0</code>:</strong></p>
-<pre><code class="language-python">sheet.note(None, 0, None, 1, note=&quot;This is column A, what it contains is important!&quot;)
+<pre><code class="language-python">self.sheet.span(None, 0, None, 1).options(table=False, header=True).note(
+            &quot;This is column A, what it contains is important!&quot;
+        )
 </code></pre>
 <p><strong>Note for cell <code>A1</code>/<code>(0, 0)</code>:</strong></p>
 <pre><code class="language-python">sheet.note(0, 0, note=&quot;This is cell A1, the first cell.&quot;)
