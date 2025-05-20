@@ -341,7 +341,6 @@ def new_sheet_options() -> DotDict:
             "row_drag_and_drop_perform": True,
             "empty_horizontal": 50,
             "empty_vertical": 50,
-            "selected_rows_to_end_of_window": False,
             "horizontal_grid_to_end_of_window": False,
             "vertical_grid_to_end_of_window": False,
             "show_vertical_grid": True,
@@ -366,5 +365,10 @@ def new_sheet_options() -> DotDict:
             "max_index_width": float("inf"),
             "show_top_left": None,
             "sort_key": natural_sort_key,
+            "tooltips": False,
+            "user_can_create_notes": False,
+            "note_corners": False,
+            "tooltip_width": 210,
+            "tooltip_height": 210,
         }
     )

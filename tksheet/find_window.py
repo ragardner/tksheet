@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from .constants import ctrl_key, rc_binding
 from .functions import recursive_bind
-from .other_classes import DotDict
+from .other_classes import DotDict, FontTuple
 
 
 class FindWindowTkText(tk.Text):
@@ -39,7 +39,7 @@ class FindWindowTkText(tk.Text):
         self,
         menu_kwargs: dict,
         sheet_ops: dict,
-        font: tuple,
+        font: FontTuple,
         bg: str,
         fg: str,
         select_bg: str,
@@ -159,7 +159,7 @@ class FindWindowTkText(tk.Text):
         return "break"
 
 
-class Tooltip(tk.Toplevel):
+class LabelTooltip(tk.Toplevel):
     def __init__(self, parent: tk.Misc, text: str, bg: str, fg: str) -> None:
         super().__init__(parent)
         self.withdraw()
@@ -510,7 +510,7 @@ class FindWindow(tk.Frame):
         """Show the tooltip at the specified position."""
         bg = self.bg if self.bg is not None else "white"
         fg = self.fg if self.fg is not None else "black"
-        self.tooltip = Tooltip(self, widget.tooltip_text, bg, fg)
+        self.tooltip = LabelTooltip(self, widget.tooltip_text, bg, fg)
         # Use current mouse position instead of recorded position
         self.tooltip.deiconify()
         show_x = max(0, self.winfo_toplevel().winfo_pointerx() - self.tooltip.winfo_width() - 5)

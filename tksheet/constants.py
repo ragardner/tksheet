@@ -21,6 +21,7 @@ named_span_types: set[str] = {
     "checkbox",
     "readonly",
     "align",
+    "note",
 }
 
 emitted_events: set[str] = {

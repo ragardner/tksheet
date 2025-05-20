@@ -23,6 +23,7 @@ CellPropertyKey = Literal[
     "checkbox",
     "readonly",
     "align",
+    "note",
 ]
 
 Binding = Literal[

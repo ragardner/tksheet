@@ -51,6 +51,7 @@ from .functions import (
     is_iterable,
     key_to_span,
     mod_event_val,
+    mod_note,
     new_tk_event,
     num2alpha,
     pop_positions,
@@ -181,7 +182,6 @@ class Sheet(tk.Frame):
         row_drag_and_drop_perform: bool = True,
         empty_horizontal: int = 50,
         empty_vertical: int = 50,
-        selected_rows_to_end_of_window: bool = False,
         horizontal_grid_to_end_of_window: bool = False,
         vertical_grid_to_end_of_window: bool = False,
         show_vertical_grid: bool = True,
@@ -201,6 +201,11 @@ class Sheet(tk.Frame):
         index_wrap: Literal["", "w", "c"] = "c",
         header_wrap: Literal["", "w", "c"] = "c",
         sort_key: Callable = natural_sort_key,
+        tooltips: bool = False,
+        user_can_create_notes: bool = False,
+        note_corners: bool = False,
+        tooltip_width: int = 210,
+        tooltip_height: int = 210,
         # colors
         outline_thickness: int = 0,
         theme: str = "light blue",
@@ -312,6 +317,7 @@ class Sheet(tk.Frame):
             highlightbackground=outline_color,
             highlightcolor=outline_color,
         )
+        self.unique_id = f"{default_timer()}{self.winfo_id()}".replace(".", "")
         self._startup_complete = False
         self.ops = new_sheet_options()
         if column_width is not None:
@@ -393,7 +399,6 @@ class Sheet(tk.Frame):
             row_index_canvas=self.RI,
             header_canvas=self.CH,
         )
-        self.unique_id = f"{default_timer()}{self.winfo_id()}".replace(".", "")
         style = ttk.Style()
         for orientation in ("Vertical", "Horizontal"):
             style.element_create(
@@ -505,6 +510,7 @@ class Sheet(tk.Frame):
         self.refresh()
         if startup_focus:
             self.MT.focus_set()
+        self.MT.create_rc_menus()
         self.after_idle(self.startup_complete)
 
     def startup_complete(self, _mod: bool = True) -> bool:
@@ -800,7 +806,6 @@ class Sheet(tk.Frame):
             self.MT.extra_header_rc_menu_funcs[label] = dct
         if empty_space_menu:
             self.MT.extra_empty_space_rc_menu_funcs[label] = dct
-        self.MT.create_rc_menus()
         return self
 
     def popup_menu_del_command(self, label: str | None = None) -> Sheet:
@@ -818,7 +823,6 @@ class Sheet(tk.Frame):
                 del self.MT.extra_header_rc_menu_funcs[label]
             if label in self.MT.extra_empty_space_rc_menu_funcs:
                 del self.MT.extra_empty_space_rc_menu_funcs[label]
-        self.MT.create_rc_menus()
         return self
 
     def basic_bindings(self, enable: bool = False) -> Sheet:
@@ -2247,6 +2251,40 @@ class Sheet(tk.Frame):
             self.MT.sheet_modified(event_data)
         return event_data
 
+    # Notes
+
+    def note(self, *key: CreateSpanTypes, note: str | None = None, readonly: bool = True) -> Span:
+        """
+        note=None to delete notes for the span area.
+        Or use a str to set notes for the span area.
+        """
+        span = self.span_from_key(*key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    mod_note(self.CH.cell_options, c, note, readonly)
+            for r in rows:
+                if index:
+                    mod_note(self.RI.cell_options, r, note, readonly)
+                if table:
+                    for c in cols:
+                        mod_note(self.MT.cell_options, (r, c), note, readonly)
+        elif span.kind == "row":
+            for r in rows:
+                if index:
+                    mod_note(self.RI.cell_options, r, note, readonly)
+                if table:
+                    mod_note(self.MT.row_options, r, note, readonly)
+        elif span.kind == "column":
+            for c in cols:
+                if header:
+                    mod_note(self.CH.cell_options, c, note, readonly)
+                if table:
+                    mod_note(self.MT.col_options, c, note, readonly)
+        return span
+
     # Highlighting Cells
 
     def highlight(
@@ -2351,6 +2389,7 @@ class Sheet(tk.Frame):
             "search_function": search_function,
             "validate_input": validate_input,
             "text": text,
+            "default_value": set_value,
         }
         d = get_dropdown_dict(**kwargs)
         span = self.span_from_key(*key)
@@ -4187,7 +4226,6 @@ class Sheet(tk.Frame):
         if "treeview" in kwargs:
             self.index_align("nw", redraw=False)
             self.ops.paste_can_expand_y = False
-        self.MT.create_rc_menus()
         return self.set_refresh_timer(redraw)
 
     def set_scrollbar_options(self) -> Sheet:
@@ -6003,6 +6041,8 @@ class Sheet(tk.Frame):
                 self._create_header_checkbox(c_, kwargs["checked"], d)
         self.set_refresh_timer(kwargs["redraw"])
 
+    checkbox_header = create_header_checkbox
+
     def _create_header_checkbox(self, c: int, v: bool, d: dict) -> None:
         self.del_header_cell_options_dropdown_and_checkbox(c)
         add_to_options(self.CH.cell_options, c, "checkbox", d)
@@ -6025,6 +6065,8 @@ class Sheet(tk.Frame):
             for r_ in r:
                 self._create_index_checkbox(r_, kwargs["checked"], d)
         self.set_refresh_timer(kwargs["redraw"])
+
+    checkbox_index = create_index_checkbox
 
     def _create_index_checkbox(self, r: int, v: bool, d: dict) -> None:
         self.del_index_cell_options_dropdown_and_checkbox(r)
@@ -6159,25 +6201,27 @@ class Sheet(tk.Frame):
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
+        edit = kwargs["edit_data"]
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self._create_dropdown(r_, c, v, d)
+                self._create_dropdown(r_, c, v, d, edit)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self._create_dropdown(r, c_, v, d)
+                self._create_dropdown(r, c_, v, d, edit)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self._create_dropdown(r_, c_, v, d)
+                    self._create_dropdown(r_, c_, v, d, edit)
         elif isinstance(r, int) and isinstance(c, int):
-            self._create_dropdown(r, c, v, d)
+            self._create_dropdown(r, c, v, d, edit)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_dropdown(self, r: int, c: int, v: Any, d: dict) -> None:
+    def _create_dropdown(self, r: int, c: int, v: Any, d: dict, edit: bool = True) -> None:
         self.del_cell_options_dropdown_and_checkbox(r, c)
         add_to_options(self.MT.cell_options, (r, c), "dropdown", d)
-        self.MT.set_cell_data(r, c, v)
+        if edit:
+            self.MT.set_cell_data(r, c, v)
 
     def dropdown_cell(
         self,
@@ -6197,21 +6241,23 @@ class Sheet(tk.Frame):
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
+        edit = kwargs["edit_data"]
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self._dropdown_row(r_, v, d)
+                self._dropdown_row(r_, v, d, edit)
         elif isinstance(r, int):
-            self._dropdown_row(r, v, d)
+            self._dropdown_row(r, v, d, edit)
         elif is_iterable(r):
             for r_ in r:
-                self._dropdown_row(r_, v, d)
+                self._dropdown_row(r_, v, d, edit)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _dropdown_row(self, r: int, v: Any, d: dict) -> None:
+    def _dropdown_row(self, r: int, v: Any, d: dict, edit: bool = True) -> None:
         self.del_row_options_dropdown_and_checkbox(r)
         add_to_options(self.MT.row_options, r, "dropdown", d)
-        for c in range(self.MT.total_data_cols()):
-            self.MT.set_cell_data(r, c, v)
+        if edit:
+            for c in range(self.MT.total_data_cols()):
+                self.MT.set_cell_data(r, c, v)
 
     def dropdown_column(
         self,
@@ -6222,21 +6268,23 @@ class Sheet(tk.Frame):
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
+        edit = kwargs["edit_data"]
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self._dropdown_column(c_, v, d)
+                self._dropdown_column(c_, v, d, edit)
         elif isinstance(c, int):
-            self._dropdown_column(c, v, d)
+            self._dropdown_column(c, v, d, edit)
         elif is_iterable(c):
             for c_ in c:
-                self._dropdown_column(c_, v, d)
+                self._dropdown_column(c_, v, d, edit)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _dropdown_column(self, c: int, v: Any, d: dict) -> None:
+    def _dropdown_column(self, c: int, v: Any, d: dict, edit: bool = True) -> None:
         self.del_column_options_dropdown_and_checkbox(c)
         add_to_options(self.MT.col_options, c, "dropdown", d)
-        for r in range(self.MT.total_data_rows()):
-            self.MT.set_cell_data(r, c, v)
+        if edit:
+            for r in range(self.MT.total_data_rows()):
+                self.MT.set_cell_data(r, c, v)
 
     def create_header_dropdown(
         self,
@@ -6247,20 +6295,24 @@ class Sheet(tk.Frame):
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
+        edit = kwargs["edit_data"]
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self._create_header_dropdown(c_, v, d)
+                self._create_header_dropdown(c_, v, d, edit)
         elif isinstance(c, int):
-            self._create_header_dropdown(c, v, d)
+            self._create_header_dropdown(c, v, d, edit)
         elif is_iterable(c):
             for c_ in c:
-                self._create_header_dropdown(c_, v, d)
+                self._create_header_dropdown(c_, v, d, edit)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_header_dropdown(self, c: int, v: Any, d: dict) -> None:
+    dropdown_header = create_header_dropdown
+
+    def _create_header_dropdown(self, c: int, v: Any, d: dict, edit: bool = True) -> None:
         self.del_header_cell_options_dropdown_and_checkbox(c)
         add_to_options(self.CH.cell_options, c, "dropdown", d)
-        self.CH.set_cell_data(c, v)
+        if edit:
+            self.CH.set_cell_data(c, v)
 
     def create_index_dropdown(
         self,
@@ -6271,20 +6323,24 @@ class Sheet(tk.Frame):
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
+        edit = kwargs["edit_data"]
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self._create_index_dropdown(r_, v, d)
+                self._create_index_dropdown(r_, v, d, edit)
         elif isinstance(r, int):
-            self._create_index_dropdown(r, v, d)
+            self._create_index_dropdown(r, v, d, edit)
         elif is_iterable(r):
             for r_ in r:
-                self._create_index_dropdown(r_, v, d)
+                self._create_index_dropdown(r_, v, d, edit)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_index_dropdown(self, r: int, v: Any, d: dict) -> None:
+    dropdown_index = create_index_dropdown
+
+    def _create_index_dropdown(self, r: int, v: Any, d: dict, edit: bool = True) -> None:
         self.del_index_cell_options_dropdown_and_checkbox(r)
         add_to_options(self.RI.cell_options, r, "dropdown", d)
-        self.RI.set_cell_data(r, v)
+        if edit:
+            self.RI.set_cell_data(r, v)
 
     def delete_dropdown(
         self,
@@ -6709,11 +6765,11 @@ class Dropdown(Sheet):
             show_top_left=False,
             empty_horizontal=0,
             empty_vertical=0,
-            selected_rows_to_end_of_window=True,
             horizontal_grid_to_end_of_window=True,
-            set_cell_sizes_on_zoom=True,
             show_selected_cells_border=False,
+            set_cell_sizes_on_zoom=True,
             scrollbar_show_arrows=False,
+            rounded_boxes=False,
         )
         self.parent = parent
         self.close_dropdown_window = close_dropdown_window
@@ -6790,7 +6846,7 @@ class Dropdown(Sheet):
             table_bg=bg,
             **{k: ops[k] for k in scrollbar_options_keys},
         )
-        self.values(values, width=width - self.yscroll.winfo_width() - 4)
+        self.values(values, width=width)
 
     def arrowkey_UP(self, event: Any = None) -> None:
         if self.row > 0:
@@ -6867,7 +6923,11 @@ class Dropdown(Sheet):
             [[v] for v in values],
             reset_col_positions=False,
             reset_row_positions=False,
-            redraw=False,
+            redraw=True,
             verify=False,
         )
-        self.set_all_cell_sizes_to_text(redraw=redraw, width=width, slim=True)
+        self.MT.main_table_redraw_grid_and_text(True, True, True, True, True)
+        if self.yscroll_showing:
+            self.set_all_cell_sizes_to_text(redraw=redraw, width=width - self.yscroll.winfo_width() - 4, slim=True)
+        else:
+            self.set_all_cell_sizes_to_text(redraw=redraw, width=width - 4, slim=True)

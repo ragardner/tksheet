@@ -204,6 +204,9 @@ class Span(dict):
     def del_format(self) -> Span:
         return self["widget"].del_format(self)
 
+    def note(self, note: str | None = None, readonly: bool = True) -> Span:
+        return self["widget"].note(self, note=note, readonly=readonly)
+
     def highlight(
         self,
         bg: bool | None | str = False,

@@ -355,6 +355,11 @@ def __init__(
     index_wrap: Literal["", "w", "c"] = "c",
     header_wrap: Literal["", "w", "c"] = "c",
     sort_key: Callable = natural_sort_key,
+    tooltips: bool = False,
+    user_can_create_notes: bool = False,
+    note_corners: bool = False,
+    tooltip_width: int = 210,
+    tooltip_height: int = 210,
     # colors
     outline_thickness: int = 0,
     theme: str = "light blue",
@@ -1074,6 +1079,11 @@ else ["<Home>"],
 "max_index_width": float("inf"),
 "show_top_left": None,
 "sort_key": natural_sort_key,
+"tooltips": False,
+"user_can_create_notes": False,
+"note_corners": False,
+"tooltip_width": int = 210,
+"tooltip_height": int = 210,
 ```
 
 Notes:
@@ -2240,33 +2250,9 @@ from tksheet import (
 n2a(5)
 ```
 
-#### **Span creation examples using square brackets**
+#### **Cell span creation using square brackets**
 
 ```python
-"""
-EXAMPLES USING SQUARE BRACKETS
-"""
-
-span = sheet[0] # first row
-span = sheet["1"] # first row
-
-span = sheet[0:2] # first two rows
-span = sheet["1:2"] # first two rows
-
-span = sheet[:] # entire sheet
-span = sheet[":"] # entire sheet
-
-span = sheet[:2] # first two rows
-span = sheet[":2"] # first two rows
-
-""" THESE TWO HAVE DIFFERENT OUTCOMES """
-span = sheet[2:] # all rows after and not inlcuding python index 1
-span = sheet["2:"] # all rows after and not including python index 0
-
-span = sheet["A"] # first column
-span = sheet["A:C"] # first three columns
-
-""" SOME CELL AREA EXAMPLES """
 span = sheet[0, 0] # cell A1
 span = sheet[(0, 0)] # cell A1
 span = sheet["A1:C1"] # cells A1, B1, C1
@@ -2310,13 +2296,53 @@ rows
 4   x   x
 ...
 """
+```
 
-""" GETTING AN EXISTING NAMED SPAN """
-# you can retrieve an existing named span quickly by surrounding its name in <> e.g.
-named_span_retrieval = sheet["<the name of the span goes here>"]
+#### **Row span creation using square brackets**
+
+```python
+span = sheet[0] # first row
+span = sheet["1"] # first row
+
+span = sheet[0:2] # first two rows
+span = sheet["1:2"] # first two rows
+
+span = sheet[:] # entire sheet
+span = sheet[":"] # entire sheet
+
+span = sheet[:2] # first two rows
+span = sheet[":2"] # first two rows
+
+""" THESE TWO HAVE DIFFERENT OUTCOMES """
+span = sheet[2:] # all rows after and not inlcuding python index 1
+span = sheet["2:"] # all rows after and not including python index 0
+```
+
+#### **Column span creation using square brackets**
+
+```python
+span = sheet[None, 0, None, 1] # first column
+span = sheet["A"] # first column
+
+span = sheet[None, 0, None, 2] # only first two columns
+span = sheet["A:B"] # only first two columns
+
+span = sheet[None, 2, None, None] # from the third column
+span = sheet["C:"] # from the third column
+
+span = sheet[None, 0, None, None] # entire sheet
+span = sheet["A:"] # entire sheet
 ```
 
 #### **Span creation examples using sheet.span()**
+
+The same arguments as shown for [cell](#cell-span-creation-using-square-brackets), [row](#row-span-creation-using-square-brackets) and [column](#column-span-creation-using-square-brackets) span creation using square brackets can also be used for creating spans using the `Sheet.span()` function. e.g:
+
+- `span = sheet.span(0, 0) # cell A1`
+- `span = sheet.span(0) # first row`
+- `span = sheet.span(None, 0, None, 1) # first column`
+
+More examples below:
 
 ```python
 """
@@ -2362,6 +2388,14 @@ int | None, int | None, int | None, int | None
 
 sheet.span(0, 0, 1, 1) # row 0, column 0 - the first cell
 sheet.span(0, 0, None, 2) # rows 0 - end, columns 0 and 1
+```
+
+#### **Retrieving an existing named span**
+
+```python
+""" GETTING AN EXISTING NAMED SPAN """
+# you can retrieve an existing named span quickly by surrounding its name in <> e.g.
+named_span_retrieval = sheet["<the name of the span goes here>"]
 ```
 
 ### **Span properties**
@@ -2735,7 +2769,18 @@ Create a readonly rule for parts of the table that are covered by the span.
 ```python
 span.readonly(readonly: bool = True) -> Span
 ```
+
 - Using `span.readonly(False)` deletes any existing readonly rules for the span. Should not be used where there are readonly rules created by named spans, see [Named spans](#named-spans) for more information.
+
+#### **Using a span to create notes**
+
+Create/delete notes for cells, rows or columns for parts of the table that are covered by the span. See [here](#notes-and-tooltips) for more information on Notes.
+
+```python
+span.note(note: str | None = None, readonly: bool = True) -> Span
+```
+
+- Using `span.note()` or `span.note(None)` deletes any existing notes for the span.
 
 #### **Using a span to create text alignment rules**
 
@@ -3877,6 +3922,10 @@ equalize_data_row_lengths(include_header: bool = True) -> int
 ---
 # **Sorting the Table**
 
+tksheet has various built-in sorting keys and functions which can handle most python objects. Rows can be sorted by a particular column, columns can be sorted by a particular row and a selection of cell's values can be sorted row/column wise.
+
+Note that the readonly functions can be used to disallow sorting of particular cell's/row's/column's values.
+
 There are three built-in sorting keys to choose from but you can always create your own and use that instead. See [here](#setting-the-default-sorting-key) for more information on how to set the default sorting key.
 
 #### **natural_sort_key**
@@ -3953,10 +4002,6 @@ from tksheet import Sheet, natural_sort_key
 my_sheet.sort_columns(0, key=natural_sort_key)
 ```
 - Setting the key like this will, for this call, override whatever key was set at initialization or using `set_options()`.
-
-#### **Notes about sorting**
-
-- The readonly functions can be used to disallow sorting of particular cells/rows/columns values.
 
 #### **Sorting cells**
 
@@ -4149,6 +4194,86 @@ Notes:
 
 - Will do partial cell data replaces also.
 - If looking within selection then hidden rows and columns will be skipped.
+
+---
+# **Notes and tooltips**
+
+When using either notes or tooltips a popup can be made to appear for associated cells when the mouse cursor **remains still over a cell's text** for 1sec.
+
+Tooltips and notes are two different things but both produce the same popup, if using both cell notes and tooltips then the popup with have clickable tabs.
+
+## **Cell tooltips**
+
+Cell tooltips show the cell's value, they are:
+
+- Disabled by default.
+- A global setting and not for individual cells like `note`s are.
+- Editable if the cell itself is editable - if the cell is readonly then the `Cell` tooltip should be also.
+- Saved when the mouse leaves the tooltip popup.
+- Change the width and height of tooltip & note popups using the settings:
+    - `set_options(tooltip_width=my_width)` (`int`).
+    - `set_options(tooltip_height=my_height)` (`int`).
+
+Activate & deactivate tooltips either at your `Sheet`s initialization:
+
+```python
+sheet = Sheet(parent, tooltips=True)
+```
+
+Or using `set_options()`
+
+```python
+sheet.set_options(tooltips=True) # or False to deactivate
+```
+
+If you only need tooltips for certain cells and do not want a global setting for all cells then it might be best to use cell notes and leave tooltips disabled (`tooltips=False` - this is the default setting anyway). More information on notes below.
+
+## **Cell notes**
+
+Notes can be attached to individual cells, rows and columns.
+
+- There is a setting that can be enabled to show a small triangle in the top right hand corner of cells that have notes `note_corners=True`. It is disabled by default.
+- Like other cell properties the priority is 1st cell 2nd row 3rd column.
+- Change the width and height of tooltip & note popups using the settings:
+    - `set_options(tooltip_width=my_width)` (`int`).
+    - `set_options(tooltip_height=my_height)` (`int`).
+- Retrieve cell notes using the `Sheet.props()` [function](#get-table-cell-properties).
+
+`Span` objects (more information [here](#span-objects)) can be used to create notes for cells, rows, columns, the entire sheet, headers and the index.
+
+You can use either of the following methods:
+- Using a span method e.g. `span.note()` more information [here](#using-a-span-to-create-notes).
+- Using a sheet method e.g. `sheet.note(Span)`
+
+Or if you need user inserted row/columns in the middle of areas with notes to also have notes you can use named spans, more information [here](#named-spans).
+
+Whether cells, rows or columns have notes depends on the [`kind`](#get-a-spans-kind) of span.
+
+```python
+note(*key: CreateSpanTypes, note: str | None = None, readonly: bool = True) -> Span
+```
+
+- To delete notes use `None` as the argument for the `note` parameter.
+- Use `readonly` `False` to allow the user to edit the existing notes.
+- `readonly` is `True` by default.
+
+You can also allow the user to create new notes and delete notes using the setting `user_can_create_notes` e.g. `sheet.set_options(user_can_create_notes=True)`.
+
+If an existing note was created using the `note()` function or `Span.note()` function and `readonly` was set to `True` then the user will not be able to edit or delete that note even if `user_can_create_notes` is `True`.
+
+Examples:
+
+**Note for header cell in column `A`/`0`:**
+
+```python
+sheet.note(None, 0, None, 1, note="This is column A, what it contains is important!")
+```
+
+**Note for cell `A1`/`(0, 0)`:**
+
+```python
+sheet.note(0, 0, note="This is cell A1, the first cell.")
+```
 
 ---
 # **Highlighting Cells**
@@ -4372,7 +4497,9 @@ Parameters:
 - `set_values` when combined with `edit_data=True` allows a `dict` to be provided of data coordinates (`tuple[int, int]` for a cell span or `int` for a row/column span) as `key`s and values to set the cell at that coordinate to.
     - e.g. `set_values={(0, 0): "new value for A1"}`.
     - The idea behind this parameter is that an entire column or row can have individual cell values and is not set to `set_value` alone.
-- `set_value` when combined with `edit_data=True` sets every cell in the span to the value provided. If left as `None` and if `set_values` is also `None` then the topmost value from `values` will be used or if not `values` then `""`.
+- `set_value` when combined with `edit_data=True` sets every cell in the span to the value provided.
+    - If left as `None` and if `set_values` is also `None` then the topmost value from `values` will be used or if not `values` then `""`.
+    - The same logic is applied when for example inserting a new row while having a column with dropdowns, the new value for the cell will be chosen in the same manner with `set_value` acting like a default value.
 - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
 - `redraw` refreshes the sheet so the newly created box is visible.
 - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
@@ -5302,6 +5429,7 @@ props(
         "checkbox",
         "readonly",
         "align",
+        "note",
     ] = None,
     cellops: bool = True,
     rowops: bool = True,
@@ -5349,6 +5477,7 @@ index_props(
         "checkbox",
         "readonly",
         "align",
+        "note",
     ] = None,
 ) -> dict
 ```
@@ -5376,6 +5505,7 @@ header_props(
         "checkbox",
         "readonly",
         "align",
+        "note",
     ] = None,
 ) -> dict
 ```

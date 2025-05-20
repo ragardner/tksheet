@@ -1,3 +1,17 @@
+### Version 7.5.7
+#### Added:
+- Notes and tooltips. Unfortunately this means that `<Enter>` and `<Leave>` have been `tag_bind()` bound to canvas `text` items.
+
+#### Fixed:
+- [#304](https://github.com/ragardner/tksheet/issues/304).
+- Cells not showing new lines in the middle of text.
+
+#### Removed:
+- `selected_rows_to_end_of_window` from Sheet init and options.
+
+#### Changed:
+- Some code has been refactored but there shouldn't be any change to behavior as a result.
+
 ### Version 7.5.6
 #### Addressed:
 - [#299](https://github.com/ragardner/tksheet/issues/299).

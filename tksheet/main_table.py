@@ -71,7 +71,6 @@ from .functions import (
     is_last_cell,
     is_type_int,
     len_to_idx,
-    menu_item_exists,
     mod_event_val,
     mod_span,
     move_elements_by_mapping_gen,
@@ -79,12 +78,16 @@ from .functions import (
     new_tk_event,
     next_cell,
     push_n,
+    recursive_bind,
     rounded_box_coords,
+    safe_copy,
     span_idxs_post_move,
     stored_event_dict,
     try_binding,
+    widget_descendants,
     wrap_text,
 )
+from .menus import build_empty_rc_menu, build_header_rc_menu, build_index_rc_menu, build_table_rc_menu
 from .other_classes import (
     Box_nt,
     Box_st,
@@ -104,6 +107,7 @@ from .row_index import RowIndex
 from .sorting import sort_selection
 from .text_editor import TextEditor
 from .tksheet_types import Binding
+from .tooltip import Tooltip
 
 
 class MainTable(tk.Canvas):
@@ -133,6 +137,18 @@ class MainTable(tk.Canvas):
         self.allow_auto_resize_rows = True
         self.span = self.PAR.span
         self.synced_scrolls = set()
+        self.tooltip = Tooltip(
+            **{
+                "parent": self,
+                "sheet_ops": self.PAR.ops,
+                "menu_kwargs": get_menu_kwargs(self.PAR.ops),
+                **get_bg_fg(self.PAR.ops),
+                "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
+            }
+        )
+        self.tooltip_widgets = widget_descendants(self.tooltip)
+        self.tooltip_coords, self.tooltip_after_id, self.tooltip_showing = None, None, False
+        recursive_bind(self.tooltip, "<Leave>", self.close_tooltip_save)
         self.dropdown = DropdownStorage()
         self.text_editor = TextEditorStorage()
         self.find_window = EditorStorageBase()
@@ -156,18 +172,20 @@ class MainTable(tk.Canvas):
         self.disp_text = {}
         self.disp_high = {}
         self.disp_grid = {}
+        self.disp_borders = set()
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        self.disp_boxes = set()
+        self.disp_corners = set()
         self.hidd_ctrl_outline = {}
         self.hidd_text = {}
         self.hidd_high = {}
         self.hidd_grid = {}
+        self.hidd_borders = set()
         self.hidd_resize_lines = {}
         self.hidd_dropdown = {}
         self.hidd_checkbox = {}
-        self.hidd_boxes = set()
+        self.hidd_corners = set()
 
         self.selection_boxes = {}
         self.selected = ()
@@ -364,7 +382,6 @@ class MainTable(tk.Canvas):
         self.rc_popup_menu, self.empty_rc_popup_menu = None, None
         self.reset_col_positions()
         self.basic_bindings()
-        self.create_rc_menus()
 
     def event_generate(self, *args, **kwargs) -> None:
         for arg in args:
@@ -638,19 +655,8 @@ class MainTable(tk.Canvas):
             if m:
                 current = f"{self.get_cell_data(datarn, datacn, True)}"
                 new = sub(escape(find), replacer(find, replace, current), current, flags=IGNORECASE)
-                event_data = event_dict(
-                    name="end_edit_table",
-                    sheet=self.PAR.name,
-                    widget=self,
-                    cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
-                    key="replace_next",
-                    value=new,
-                    loc=Loc(sel.row, sel.column),
-                    row=sel.row,
-                    column=sel.column,
-                    boxes=self.get_boxes(),
-                    selected=self.selected,
-                    data={(datarn, datacn): new},
+                event_data = self.new_single_edit_event(
+                    sel.row, sel.column, datarn, datacn, "replace_next", self.get_cell_data(datarn, datacn), new
                 )
                 value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
                 if value is not None and (
@@ -992,6 +998,24 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes() if boxes is None else boxes,
             selected=self.selected,
             sheet_state=self.copy_sheet_state() if state else None,
+        )
+
+    def new_single_edit_event(
+        self, r: int, c: int, datarn: int, datacn: int, k: str, before_val: Any, after_val: Any
+    ) -> EventDataDict:
+        return event_dict(
+            name="end_edit_table",
+            sheet=self.PAR.name,
+            widget=self,
+            cells_table={(datarn, datacn): before_val},
+            key=k,
+            value=after_val,
+            loc=Loc(r, c),
+            row=r,
+            column=c,
+            boxes=self.get_boxes(),
+            selected=self.selected,
+            data={(datarn, datacn): after_val},
         )
 
     def ctrl_c(self, event=None) -> None | EventDataDict:
@@ -2957,392 +2981,6 @@ class MainTable(tk.Canvas):
             self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff=0, background=self.PAR.ops.popup_menu_bg)
         if not self.empty_rc_popup_menu:
             self.empty_rc_popup_menu = tk.Menu(self, tearoff=0, background=self.PAR.ops.popup_menu_bg)
-        for menu in (
-            self.rc_popup_menu,
-            self.CH.ch_rc_popup_menu,
-            self.RI.ri_rc_popup_menu,
-            self.empty_rc_popup_menu,
-        ):
-            menu.delete(0, "end")
-        mnkwgs = get_menu_kwargs(self.PAR.ops)
-        if self.header_edit_cell_enabled():
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.edit_header_label,
-                command=lambda: self.CH.open_cell(event="rc"),
-                image=self.PAR.ops.edit_header_image,
-                compound=self.PAR.ops.edit_header_compound,
-                **mnkwgs,
-            )
-        if self.index_edit_cell_enabled():
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.edit_index_label,
-                command=lambda: self.RI.open_cell(event="rc"),
-                image=self.PAR.ops.edit_index_image,
-                compound=self.PAR.ops.edit_index_compound,
-                **mnkwgs,
-            )
-        if self.table_edit_cell_enabled():
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.edit_cell_label,
-                command=lambda: self.open_cell(event="rc"),
-                image=self.PAR.ops.edit_cell_image,
-                compound=self.PAR.ops.edit_cell_compound,
-                **mnkwgs,
-            )
-        if self.cut_enabled and any(
-            x in self.enabled_bindings_menu_entries for x in ("all", "cut", "edit_bindings", "edit")
-        ):
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.cut_label,
-                accelerator=self.PAR.ops.cut_accelerator,
-                command=self.ctrl_x,
-                image=self.PAR.ops.cut_image,
-                compound=self.PAR.ops.cut_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.cut_contents_label,
-                accelerator=self.PAR.ops.cut_contents_accelerator,
-                command=self.ctrl_x,
-                image=self.PAR.ops.cut_contents_image,
-                compound=self.PAR.ops.cut_contents_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.cut_contents_label,
-                accelerator=self.PAR.ops.cut_contents_accelerator,
-                command=self.ctrl_x,
-                image=self.PAR.ops.cut_contents_image,
-                compound=self.PAR.ops.cut_contents_compound,
-                **mnkwgs,
-            )
-        if self.copy_enabled and any(
-            x in self.enabled_bindings_menu_entries for x in ("all", "copy", "edit_bindings", "edit")
-        ):
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.copy_label,
-                accelerator=self.PAR.ops.copy_accelerator,
-                command=self.ctrl_c,
-                image=self.PAR.ops.copy_image,
-                compound=self.PAR.ops.copy_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.copy_contents_label,
-                accelerator=self.PAR.ops.copy_contents_accelerator,
-                command=self.ctrl_c,
-                image=self.PAR.ops.copy_contents_image,
-                compound=self.PAR.ops.copy_contents_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.copy_contents_label,
-                accelerator=self.PAR.ops.copy_contents_accelerator,
-                command=self.ctrl_c,
-                image=self.PAR.ops.copy_contents_image,
-                compound=self.PAR.ops.copy_contents_compound,
-                **mnkwgs,
-            )
-        if self.paste_enabled and any(
-            x in self.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit")
-        ):
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.paste_label,
-                accelerator=self.PAR.ops.paste_accelerator,
-                command=self.ctrl_v,
-                image=self.PAR.ops.paste_image,
-                compound=self.PAR.ops.paste_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.paste_label,
-                accelerator=self.PAR.ops.paste_accelerator,
-                command=self.ctrl_v,
-                image=self.PAR.ops.paste_image,
-                compound=self.PAR.ops.paste_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.paste_label,
-                accelerator=self.PAR.ops.paste_accelerator,
-                command=self.ctrl_v,
-                image=self.PAR.ops.paste_image,
-                compound=self.PAR.ops.paste_compound,
-                **mnkwgs,
-            )
-            if self.PAR.ops.paste_can_expand_x or self.PAR.ops.paste_can_expand_y:
-                self.menu_add_command(
-                    self.empty_rc_popup_menu,
-                    label=self.PAR.ops.paste_label,
-                    accelerator=self.PAR.ops.paste_accelerator,
-                    command=self.ctrl_v,
-                    image=self.PAR.ops.paste_image,
-                    compound=self.PAR.ops.paste_compound,
-                    **mnkwgs,
-                )
-        if self.delete_key_enabled and any(
-            x in self.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit")
-        ):
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.delete_label,
-                accelerator=self.PAR.ops.delete_accelerator,
-                command=self.delete_key,
-                image=self.PAR.ops.delete_image,
-                compound=self.PAR.ops.delete_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.clear_contents_label,
-                accelerator=self.PAR.ops.clear_contents_accelerator,
-                command=self.delete_key,
-                image=self.PAR.ops.clear_contents_image,
-                compound=self.PAR.ops.clear_contents_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.clear_contents_label,
-                accelerator=self.PAR.ops.clear_contents_accelerator,
-                command=self.delete_key,
-                image=self.PAR.ops.clear_contents_image,
-                compound=self.PAR.ops.clear_contents_compound,
-                **mnkwgs,
-            )
-        if self.rc_delete_column_enabled:
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.delete_columns_label,
-                command=self.delete_columns,
-                image=self.PAR.ops.delete_columns_image,
-                compound=self.PAR.ops.delete_columns_compound,
-                **mnkwgs,
-            )
-        if self.rc_insert_column_enabled:
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.insert_columns_left_label,
-                command=lambda: self.rc_add_columns("left"),
-                image=self.PAR.ops.insert_columns_left_image,
-                compound=self.PAR.ops.insert_columns_left_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.insert_columns_right_label,
-                command=lambda: self.rc_add_columns("right"),
-                image=self.PAR.ops.insert_columns_right_image,
-                compound=self.PAR.ops.insert_columns_right_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.empty_rc_popup_menu,
-                label=self.PAR.ops.insert_column_label,
-                command=lambda: self.rc_add_columns("left"),
-                image=self.PAR.ops.insert_column_image,
-                compound=self.PAR.ops.insert_column_compound,
-                **mnkwgs,
-            )
-        if self.rc_delete_row_enabled:
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.delete_rows_label,
-                command=self.delete_rows,
-                image=self.PAR.ops.delete_rows_image,
-                compound=self.PAR.ops.delete_rows_compound,
-                **mnkwgs,
-            )
-        if self.rc_insert_row_enabled:
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.insert_rows_above_label,
-                command=lambda: self.rc_add_rows("above"),
-                image=self.PAR.ops.insert_rows_above_image,
-                compound=self.PAR.ops.insert_rows_above_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.insert_rows_below_label,
-                command=lambda: self.rc_add_rows("below"),
-                image=self.PAR.ops.insert_rows_below_image,
-                compound=self.PAR.ops.insert_rows_below_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.empty_rc_popup_menu,
-                label=self.PAR.ops.insert_row_label,
-                command=lambda: self.rc_add_rows("below"),
-                image=self.PAR.ops.insert_row_image,
-                compound=self.PAR.ops.insert_row_compound,
-                **mnkwgs,
-            )
-        if self.rc_sort_cells_enabled:
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.sort_cells_label,
-                accelerator=self.PAR.ops.sort_cells_accelerator,
-                command=self.sort_boxes,
-                image=self.PAR.ops.sort_cells_image,
-                compound=self.PAR.ops.sort_cells_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.sort_cells_reverse_label,
-                accelerator=self.PAR.ops.sort_cells_reverse_accelerator,
-                command=lambda: self.sort_boxes(reverse=True),
-                image=self.PAR.ops.sort_cells_reverse_image,
-                compound=self.PAR.ops.sort_cells_reverse_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.sort_cells_x_label,
-                accelerator=self.PAR.ops.sort_cells_x_accelerator,
-                command=lambda: self.sort_boxes(row_wise=True),
-                image=self.PAR.ops.sort_cells_x_image,
-                compound=self.PAR.ops.sort_cells_x_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=self.PAR.ops.sort_cells_x_reverse_label,
-                accelerator=self.PAR.ops.sort_cells_x_reverse_accelerator,
-                command=lambda: self.sort_boxes(reverse=True, row_wise=True),
-                image=self.PAR.ops.sort_cells_x_reverse_image,
-                compound=self.PAR.ops.sort_cells_x_reverse_compound,
-                **mnkwgs,
-            )
-        # row index sort rows cells
-        if self.rc_sort_row_enabled:
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.sort_row_label,
-                accelerator=self.PAR.ops.sort_row_accelerator,
-                command=self.RI._sort_rows,
-                image=self.PAR.ops.sort_row_image,
-                compound=self.PAR.ops.sort_row_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.sort_row_reverse_label,
-                accelerator=self.PAR.ops.sort_row_reverse_accelerator,
-                command=lambda: self.RI._sort_rows(reverse=True),
-                image=self.PAR.ops.sort_row_reverse_image,
-                compound=self.PAR.ops.sort_row_reverse_compound,
-                **mnkwgs,
-            )
-        # header sort columns cells
-        if self.rc_sort_column_enabled:
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.sort_column_label,
-                accelerator=self.PAR.ops.sort_column_accelerator,
-                command=self.CH._sort_columns,
-                image=self.PAR.ops.sort_column_image,
-                compound=self.PAR.ops.sort_column_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.sort_column_reverse_label,
-                accelerator=self.PAR.ops.sort_column_reverse_accelerator,
-                command=lambda: self.CH._sort_columns(reverse=True),
-                image=self.PAR.ops.sort_column_reverse_image,
-                compound=self.PAR.ops.sort_column_reverse_compound,
-                **mnkwgs,
-            )
-        # row index sort columns by row
-        if self.rc_sort_columns_enabled:
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.sort_columns_label,
-                accelerator=self.PAR.ops.sort_columns_accelerator,
-                command=self.RI._sort_columns_by_row,
-                image=self.PAR.ops.sort_columns_image,
-                compound=self.PAR.ops.sort_columns_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.sort_columns_reverse_label,
-                accelerator=self.PAR.ops.sort_columns_reverse_accelerator,
-                command=lambda: self.RI._sort_columns_by_row(reverse=True),
-                image=self.PAR.ops.sort_columns_reverse_image,
-                compound=self.PAR.ops.sort_columns_reverse_compound,
-                **mnkwgs,
-            )
-        # header sort rows by column
-        if self.rc_sort_rows_enabled:
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.sort_rows_label,
-                accelerator=self.PAR.ops.sort_rows_accelerator,
-                command=self.CH._sort_rows_by_column,
-                image=self.PAR.ops.sort_rows_image,
-                compound=self.PAR.ops.sort_rows_compound,
-                **mnkwgs,
-            )
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.sort_rows_reverse_label,
-                accelerator=self.PAR.ops.sort_rows_reverse_accelerator,
-                command=lambda: self.CH._sort_rows_by_column(reverse=True),
-                image=self.PAR.ops.sort_rows_reverse_image,
-                compound=self.PAR.ops.sort_rows_reverse_compound,
-                **mnkwgs,
-            )
-        if self.undo_enabled and any(
-            x in self.enabled_bindings_menu_entries for x in ("all", "undo", "redo", "edit_bindings", "edit")
-        ):
-            for menu in (
-                self.rc_popup_menu,
-                self.RI.ri_rc_popup_menu,
-                self.CH.ch_rc_popup_menu,
-                self.empty_rc_popup_menu,
-            ):
-                self.menu_add_command(
-                    menu,
-                    label=self.PAR.ops.undo_label,
-                    accelerator=self.PAR.ops.undo_accelerator,
-                    command=self.undo,
-                    image=self.PAR.ops.undo_image,
-                    compound=self.PAR.ops.undo_compound,
-                    **mnkwgs,
-                )
-                self.menu_add_command(
-                    menu,
-                    label=self.PAR.ops.redo_label,
-                    accelerator=self.PAR.ops.redo_accelerator,
-                    command=self.redo,
-                    image=self.PAR.ops.redo_image,
-                    compound=self.PAR.ops.redo_compound,
-                    **mnkwgs,
-                )
-        # Added popup menu commands
-        for label, kws in self.extra_table_rc_menu_funcs.items():
-            self.menu_add_command(self.rc_popup_menu, label=label, **{**mnkwgs, **kws})
-        for label, kws in self.extra_index_rc_menu_funcs.items():
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label=label, **{**mnkwgs, **kws})
-        for label, kws in self.extra_header_rc_menu_funcs.items():
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label=label, **{**mnkwgs, **kws})
-        for label, kws in self.extra_empty_space_rc_menu_funcs.items():
-            self.menu_add_command(self.empty_rc_popup_menu, label=label, **{**mnkwgs, **kws})
 
     def enable_bindings(self, bindings: Any, menu: bool = True) -> None:
         if not bindings:
@@ -3356,7 +2994,6 @@ class MainTable(tk.Canvas):
                     self._enable_binding(binding.lower(), menu)
         elif isinstance(bindings, str):
             self._enable_binding(bindings.lower(), menu)
-        self.create_rc_menus()
 
     def disable_bindings(self, bindings: Any) -> None:
         if not bindings:
@@ -3370,7 +3007,6 @@ class MainTable(tk.Canvas):
                     self._disable_binding(binding.lower())
         elif isinstance(bindings, str):
             self._disable_binding(bindings)
-        self.create_rc_menus()
 
     def _enable_binding(self, binding: Binding, menu: bool = True) -> None:
         if binding == "enable_all":
@@ -3680,58 +3316,6 @@ class MainTable(tk.Canvas):
             or (datacn in self.col_options and "readonly" in self.col_options[datacn])
         )
 
-    def popup_menu_disable_edit_if_readonly(self, popup_menu: tk.Menu) -> None:
-        # table
-        if (
-            self.selected
-            and self.index_edit_cell_enabled()
-            and menu_item_exists(popup_menu, self.PAR.ops.edit_cell_label)
-        ):
-            datarn, datacn = self.datarn(self.selected.row), self.datacn(self.selected.column)
-            if self.is_readonly(datarn, datacn):
-                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, image="", state="disabled")
-            else:
-                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, image=self.PAR.ops.edit_cell_image, state="normal")
-        # index
-        if (
-            self.selected
-            and self.index_edit_cell_enabled()
-            and menu_item_exists(popup_menu, self.PAR.ops.edit_index_label)
-        ):
-            datarn = self.datarn(self.selected.row)
-            if self.RI.is_readonly(datarn):
-                popup_menu.entryconfig(self.PAR.ops.edit_index_label, image="", state="disabled")
-            else:
-                popup_menu.entryconfig(
-                    self.PAR.ops.edit_index_label, image=self.PAR.ops.edit_index_image, state="normal"
-                )
-        # header
-        if (
-            self.selected
-            and self.header_edit_cell_enabled()
-            and menu_item_exists(popup_menu, self.PAR.ops.edit_header_label)
-        ):
-            datacn = self.datacn(self.selected.column)
-            if self.CH.is_readonly(datacn):
-                popup_menu.entryconfig(self.PAR.ops.edit_header_label, image="", state="disabled")
-            else:
-                popup_menu.entryconfig(
-                    self.PAR.ops.edit_header_label, image=self.PAR.ops.edit_header_image, state="normal"
-                )
-
-    def popup_menu_disable_undo_redo(self, popup_menu: tk.Menu) -> None:
-        if not self.undo_enabled:
-            return
-        if menu_item_exists(popup_menu, self.PAR.ops.undo_label):
-            if not self.undo_stack:
-                popup_menu.entryconfig(self.PAR.ops.undo_label, image="", state="disabled")
-            else:
-                popup_menu.entryconfig(self.PAR.ops.undo_label, image=self.PAR.ops.undo_image, state="normal")
-            if not self.redo_stack:
-                popup_menu.entryconfig(self.PAR.ops.redo_label, image="", state="disabled")
-            else:
-                popup_menu.entryconfig(self.PAR.ops.redo_label, image=self.PAR.ops.redo_image, state="normal")
-
     def rc(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
@@ -3743,12 +3327,15 @@ class MainTable(tk.Canvas):
                 if self.col_selected(c):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.CH.ch_rc_popup_menu
+                        build_header_rc_menu(self, popup_menu, c)
                 elif self.row_selected(r):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.RI.ri_rc_popup_menu
+                        build_index_rc_menu(self, popup_menu, r)
                 elif self.cell_selected(r, c):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
+                        build_table_rc_menu(self, popup_menu, r, c)
                 else:
                     if self.rc_select_enabled:
                         if self.single_selection_enabled:
@@ -3757,14 +3344,14 @@ class MainTable(tk.Canvas):
                             self.toggle_select_cell(r, c, redraw=True)
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
+                        build_table_rc_menu(self, popup_menu, r, c)
             else:
                 self.deselect("all")
                 if self.rc_popup_menus_enabled:
                     popup_menu = self.empty_rc_popup_menu
+                    build_empty_rc_menu(self, popup_menu)
         try_binding(self.extra_rc_func, event)
         if popup_menu:
-            self.popup_menu_disable_edit_if_readonly(popup_menu)
-            self.popup_menu_disable_undo_redo(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event: Any = None) -> None:
@@ -4352,7 +3939,6 @@ class MainTable(tk.Canvas):
             r_pc=r_pc,
             c_pc=c_pc,
         )
-        self.create_rc_menus()
 
     def get_txt_w(self, txt: str, font: None | FontTuple = None) -> int:
         self.txt_measure_canvas.itemconfig(
@@ -4752,7 +4338,9 @@ class MainTable(tk.Canvas):
         added_w_space = 1 if slim else 7
         for datacn in itercols:
             w = min_column_width if width is None else width
-            w = hw if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w else min_column_width
+            hw = self.CH.get_cell_dimensions(datacn)[0]
+            if hw > w:
+                w = hw
             for datarn in iterrows:
                 if txt := self.cell_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt, font=qfont)
@@ -5589,11 +5177,11 @@ class MainTable(tk.Canvas):
             if isinstance(self._row_index, list):
                 tree = self.PAR.ops.treeview
                 for datarn in range(data_ins_row, data_ins_row + rows):
-                    rows_dict[datarn] = [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(rng)]
+                    rows_dict[datarn] = [self.get_value_for_empty_cell(datarn, c, c_ops=True) for c in range(rng)]
                     index_dict[datarn] = self.RI.get_value_for_empty_cell(data_ins_row if tree else datarn, r_ops=False)
             else:
                 for datarn in range(data_ins_row, data_ins_row + rows):
-                    rows_dict[datarn] = [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(rng)]
+                    rows_dict[datarn] = [self.get_value_for_empty_cell(datarn, c, c_ops=True) for c in range(rng)]
         else:
             if isinstance(self._row_index, list) and row_index:
                 for datarn, row in enumerate(rows, data_ins_row):
@@ -6120,9 +5708,9 @@ class MainTable(tk.Canvas):
             kwargs = alternate_color
 
         if kwargs:
-            fill = kwargs[0]
-            if fill and not fill.startswith("#"):
-                fill = color_map[fill]
+            high_bg = kwargs[0]
+            if high_bg and not high_bg.startswith("#"):
+                high_bg = color_map[high_bg]
 
             # cell is a single currently selected cell box
             #         not highlighted
@@ -6137,12 +5725,24 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if fill:
-                    fill = (
-                        f"#{int((int(fill[1:3], 16) + sel_cells_bg[0]) / 2):02X}"
-                        + f"{int((int(fill[3:5], 16) + sel_cells_bg[1]) / 2):02X}"
-                        + f"{int((int(fill[5:], 16) + sel_cells_bg[2]) / 2):02X}"
-                    )
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=(
+                        self.PAR.ops.table_selected_cells_bg
+                        if high_bg is None
+                        else (
+                            f"#{int((int(high_bg[1:3], 16) + sel_cells_bg[0]) / 2):02X}"
+                            + f"{int((int(high_bg[3:5], 16) + sel_cells_bg[1]) / 2):02X}"
+                            + f"{int((int(high_bg[5:], 16) + sel_cells_bg[2]) / 2):02X}"
+                        )
+                    ),
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
 
             # cell is highlighted and row selected
             elif "rows" in selections and r in selections["rows"]:
@@ -6151,12 +5751,24 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if fill:
-                    fill = (
-                        f"#{int((int(fill[1:3], 16) + sel_rows_bg[0]) / 2):02X}"
-                        + f"{int((int(fill[3:5], 16) + sel_rows_bg[1]) / 2):02X}"
-                        + f"{int((int(fill[5:], 16) + sel_rows_bg[2]) / 2):02X}"
-                    )
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=(
+                        self.PAR.ops.table_selected_rows_bg
+                        if high_bg is None
+                        else (
+                            f"#{int((int(high_bg[1:3], 16) + sel_rows_bg[0]) / 2):02X}"
+                            + f"{int((int(high_bg[3:5], 16) + sel_rows_bg[1]) / 2):02X}"
+                            + f"{int((int(high_bg[5:], 16) + sel_rows_bg[2]) / 2):02X}"
+                        )
+                    ),
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
 
             # cell is highlighted and column selected
             elif "columns" in selections and c in selections["columns"]:
@@ -6165,43 +5777,55 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if fill:
-                    fill = (
-                        f"#{int((int(fill[1:3], 16) + sel_cols_bg[0]) / 2):02X}"
-                        + f"{int((int(fill[3:5], 16) + sel_cols_bg[1]) / 2):02X}"
-                        + f"{int((int(fill[5:], 16) + sel_cols_bg[2]) / 2):02X}"
-                    )
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=(
+                        self.PAR.ops.table_selected_columns_bg
+                        if high_bg is None
+                        else (
+                            f"#{int((int(high_bg[1:3], 16) + sel_cols_bg[0]) / 2):02X}"
+                            + f"{int((int(high_bg[3:5], 16) + sel_cols_bg[1]) / 2):02X}"
+                            + f"{int((int(high_bg[5:], 16) + sel_cols_bg[2]) / 2):02X}"
+                        )
+                    ),
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
 
-            # cell is just highlighted
+            # cell is just highlighted (no selection)
             else:
                 txtfg = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
-
-            if fill:
-                if not isinstance(kwargs, ProgressBar):
-                    redrawn = self.redraw_highlight(
-                        x1=fc + 1,
-                        y1=fr + 1,
-                        x2=sc,
-                        y2=sr,
-                        fill=fill,
-                        outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
-                        can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
-                        pc=None,
-                    )
-                else:
-                    if kwargs.del_when_done and kwargs.percent >= 100:
-                        del self.progress_bars[(datarn, datacn)]
-                    else:
+                if high_bg:  # Only draw if fill exists
+                    if not isinstance(kwargs, ProgressBar):
                         redrawn = self.redraw_highlight(
                             x1=fc + 1,
                             y1=fr + 1,
                             x2=sc,
                             y2=sr,
-                            fill=fill,
+                            fill=high_bg,
                             outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
-                            can_width=None,
-                            pc=kwargs.percent,
+                            can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
+                            pc=None,
                         )
+                    else:
+                        if kwargs.del_when_done and kwargs.percent >= 100:
+                            del self.progress_bars[(datarn, datacn)]
+                        else:
+                            redrawn = self.redraw_highlight(
+                                x1=fc + 1,
+                                y1=fr + 1,
+                                x2=sc,
+                                y2=sr,
+                                fill=high_bg,
+                                outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                                can_width=None,
+                                pc=kwargs.percent,
+                            )
+
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
                 txtfg = self.PAR.ops.table_selected_cells_fg
@@ -6454,6 +6078,17 @@ class MainTable(tk.Canvas):
             self.char_widths[self.table_font][c] = wd
             return wd
 
+    def redraw_corner(self, x: float, y: float) -> None:
+        if self.hidd_corners:
+            iid = self.hidd_corners.pop()
+            self.coords(iid, x - 10, y, x, y, x, y + 10)
+            self.itemconfig(iid, fill=self.PAR.ops.table_grid_fg, state="normal")
+            self.disp_corners.add(iid)
+        else:
+            self.disp_corners.add(
+                self.create_polygon(x - 10, y, x, y, x, y + 10, fill=self.PAR.ops.table_grid_fg, tags="lift")
+            )
+
     def redraw_grid_and_text(
         self,
         last_row_line_pos: float,
@@ -6488,6 +6123,8 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
+        self.hidd_corners.update(self.disp_corners)
+        self.disp_corners = set()
         points = []
         # manage horizontal grid lines
         if self.PAR.ops.show_horizontal_grid and row_pos_exists:
@@ -6560,10 +6197,10 @@ class MainTable(tk.Canvas):
             text_start_col=text_start_col,
             text_end_col=text_end_col,
         )
+        note_corners = self.PAR.ops.note_corners
 
         # This is a little messy but
         # we try to avoid any function use to maximise performance
-
         for r in range(text_start_row, text_end_row):
             rtopgridln = self.row_positions[r]
             rbotgridln = self.row_positions[r + 1]
@@ -6720,10 +6357,21 @@ class MainTable(tk.Canvas):
                     elif align[-1] == "n":
                         draw_x = cleftgridln + (crightgridln - cleftgridln) / 2
 
+                if (
+                    note_corners
+                    and max_width > 5
+                    and (
+                        (loc in self.cell_options and "note" in self.cell_options[(datarn, datacn)])
+                        or (datarn in self.row_options and "note" in self.row_options[datarn])
+                        or (datacn in self.col_options and "note" in self.col_options[datacn])
+                    )
+                ):
+                    self.redraw_corner(crightgridln, rtopgridln)
+
                 # redraw text
 
                 text = cells[loc]
-                if not text or (align[-1] == "w" and draw_x > scrollpos_right) or cleftgridln + 5 > scrollpos_right:
+                if (align[-1] == "w" and draw_x > scrollpos_right) or cleftgridln + 5 > scrollpos_right:
                     continue
                 if allow_overflow and not kws:
                     if align[-1] == "w":
@@ -6748,14 +6396,33 @@ class MainTable(tk.Canvas):
                         iid, showing = self.hidd_text.popitem()
                         self.coords(iid, draw_x, draw_y)
                         if showing:
-                            self.itemconfig(iid, text="\n".join(gen_lines), fill=fill, font=font, anchor=align)
+                            self.itemconfig(
+                                iid,
+                                text="\n".join(gen_lines),
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                tags=("lift", "t", f"{r}_{c}"),
+                            )
                         else:
                             self.itemconfig(
-                                iid, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, state="normal"
+                                iid,
+                                text="\n".join(gen_lines),
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                state="normal",
+                                tags=("lift", "t", f"{r}_{c}"),
                             )
                     else:
                         iid = self.create_text(
-                            draw_x, draw_y, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, tag="lift"
+                            draw_x,
+                            draw_y,
+                            text="\n".join(gen_lines),
+                            fill=fill,
+                            font=font,
+                            anchor=align,
+                            tags=("lift", "t", f"{r}_{c}"),
                         )
                     self.disp_text[iid] = True
 
@@ -6765,12 +6432,33 @@ class MainTable(tk.Canvas):
                             iid, showing = self.hidd_text.popitem()
                             self.coords(iid, draw_x, draw_y)
                             if showing:
-                                self.itemconfig(iid, text=t, fill=fill, font=font, anchor=align)
+                                self.itemconfig(
+                                    iid,
+                                    text=t,
+                                    fill=fill,
+                                    font=font,
+                                    anchor=align,
+                                    tags=("lift", "t", f"{r}_{c}"),
+                                )
                             else:
-                                self.itemconfig(iid, text=t, fill=fill, font=font, anchor=align, state="normal")
+                                self.itemconfig(
+                                    iid,
+                                    text=t,
+                                    fill=fill,
+                                    font=font,
+                                    anchor=align,
+                                    state="normal",
+                                    tags=("lift", "t", f"{r}_{c}"),
+                                )
                         else:
                             iid = self.create_text(
-                                draw_x, draw_y, text=t, fill=fill, font=font, anchor=align, tag="lift"
+                                draw_x,
+                                draw_y,
+                                text=t,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                tags=("lift", "t", f"{r}_{c}"),
                             )
                         self.disp_text[iid] = True
                         draw_y += self.table_txt_height
@@ -6785,6 +6473,8 @@ class MainTable(tk.Canvas):
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
+        for iid in self.hidd_corners:
+            self.itemconfig(iid, state="hidden")
         if self.PAR.ops.show_selected_cells_border:
             for _, box in self.selection_boxes.items():
                 if box.bd_iid:
@@ -6792,6 +6482,115 @@ class MainTable(tk.Canvas):
             if self.selected:
                 self.tag_raise(self.selected.iid)
         self.lift("lift")
+        self.tag_bind("t", "<Enter>", self.enter_text)
+        self.tag_bind("t", "<Leave>", self.leave_text)
+
+    def enter_text(self, event: tk.Event | None = None) -> None:
+        can_x, can_y = self.canvasx(event.x), self.canvasy(event.y)
+        for i in self.find_overlapping(can_x - 1, can_y - 1, can_x + 1, can_y + 1):
+            try:
+                if (coords := self.gettags(i)[2]) == self.tooltip_coords:
+                    return
+                self.tooltip_coords = coords
+                self.tooltip_last_x, self.tooltip_last_y = self.winfo_pointerx(), self.winfo_pointery()
+                self.start_tooltip_timer()
+                return
+            except Exception:
+                continue
+
+    def leave_text(self, event: tk.Event | None = None) -> None:
+        if self.tooltip_after_id is not None:
+            self.after_cancel(self.tooltip_after_id)
+            self.tooltip_after_id = None
+        if self.tooltip_showing:
+            if self.winfo_containing(self.winfo_pointerx(), self.winfo_pointery()) not in self.tooltip_widgets:
+                self.close_tooltip_save()
+        else:
+            self.tooltip_coords = None
+
+    def start_tooltip_timer(self) -> None:
+        self.tooltip_after_id = self.after(1000, self.check_and_show_tooltip)
+
+    def check_and_show_tooltip(self, event: tk.Event | None = None) -> None:
+        current_x, current_y = self.winfo_pointerx(), self.winfo_pointery()
+        if current_x < 0 or current_y < 0:
+            return
+        if abs(current_x - self.tooltip_last_x) <= 1 and abs(current_y - self.tooltip_last_y) <= 1:
+            self.show_tooltip()
+        else:
+            self.tooltip_last_x, self.tooltip_last_y = current_x, current_y
+            self.tooltip_after_id = self.after(400, self.check_and_show_tooltip)
+
+    def hide_tooltip(self) -> None:
+        self.tooltip.withdraw()
+        self.tooltip_showing, self.tooltip_coords = False, None
+
+    def show_tooltip(self) -> None:
+        if self.text_editor.open or self.dropdown.open:
+            return
+        coords = self.tooltip_coords.split("_")
+        r, c = int(coords[0]), int(coords[1])
+        datarn, datacn = self.datarn(r), self.datacn(c)
+        kws = self.get_cell_kwargs(datarn, datacn, key="note")
+        if not self.PAR.ops.tooltips and not kws and not self.PAR.ops.user_can_create_notes:
+            return
+        cell_readonly = self.get_cell_kwargs(datarn, datacn, "readonly") or not self.table_edit_cell_enabled()
+        if kws:
+            note = kws["note"]
+            note_readonly = kws["readonly"]
+        elif self.PAR.ops.user_can_create_notes:
+            note = ""
+            note_readonly = bool(cell_readonly)
+        else:
+            note = None
+            note_readonly = True
+        note_only = not self.PAR.ops.tooltips and isinstance(note, str)
+        self.tooltip.reset(
+            **{
+                "text": f"{self.get_cell_data(datarn, datacn, none_to_empty_str=True)}",
+                "cell_readonly": cell_readonly,
+                "note": note,
+                "note_readonly": note_readonly,
+                "row": r,
+                "col": c,
+                "menu_kwargs": get_menu_kwargs(self.PAR.ops),
+                **get_bg_fg(self.PAR.ops),
+                "user_can_create_notes": self.PAR.ops.user_can_create_notes,
+                "note_only": note_only,
+                "width": self.PAR.ops.tooltip_width,
+                "height": self.PAR.ops.tooltip_height,
+            }
+        )
+        self.tooltip.set_position(self.tooltip_last_x - 4, self.tooltip_last_y - 4)
+        self.tooltip_showing = True
+
+    def close_tooltip_save(self, event: tk.Event | None = None) -> None:
+        widget = self.winfo_containing(self.winfo_pointerx(), self.winfo_pointery())
+        if any(widget == tw for tw in self.tooltip_widgets):
+            try:
+                if self.tooltip.notebook.index("current") == 0:
+                    self.tooltip.content_text.focus_set()
+                else:
+                    self.tooltip.note_text.focus_set()
+            except Exception:
+                self.tooltip.content_text.focus_set()
+            return
+        if not self.tooltip.cell_readonly:
+            r, c, cell, note = self.tooltip.get()
+            datarn, datacn = self.datarn(r), self.datacn(c)
+            event_data = self.new_single_edit_event(
+                r, c, datarn, datacn, "??", self.get_cell_data(datarn, datacn), cell
+            )
+            value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
+            if value is not None and (
+                self.set_cell_data_undo(r=r, c=c, datarn=datarn, datacn=datacn, value=value, redraw=False)
+            ):
+                try_binding(self.extra_end_edit_cell_func, event_data)
+        if not self.tooltip.note_readonly:
+            self.PAR.note(datarn, datacn, note=note if note else None, readonly=False)
+        self.hide_tooltip()
+        self.refresh()
+        self.focus_set()
 
     def main_table_redraw_grid_and_text(
         self,
@@ -7019,13 +6818,12 @@ class MainTable(tk.Canvas):
         x2 = self.col_positions[c + 1] if index_exists(self.col_positions, c + 1) else self.col_positions[c] + 1
         y2 = self.row_positions[r + 1] if index_exists(self.row_positions, r + 1) else self.row_positions[r] + 1
         self.hide_selected()
-        iid = self.display_box(
+        iid = self.display_border(
             x1,
             y1,
             x2,
             y2,
-            fill="",
-            outline=outline if self.PAR.ops.show_selected_cells_border else "",
+            fill=outline if self.PAR.ops.show_selected_cells_border else "",
             state="normal",
             tags="selected",
             width=2,
@@ -7040,14 +6838,13 @@ class MainTable(tk.Canvas):
         )
         return iid
 
-    def display_box(
+    def display_border(
         self,
         x1: int,
         y1: int,
         x2: int,
         y2: int,
         fill: str,
-        outline: str,
         state: str,
         tags: str | tuple[str],
         width: int,
@@ -7062,30 +6859,29 @@ class MainTable(tk.Canvas):
             radius=radius,
         )
         if isinstance(iid, int):
-            self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
-            self.coords(iid, coords)
+            self.itemconfig(iid, fill=fill, state=state, tags=tags, width=width)
+            self.coords(iid, *coords)
         else:
-            if self.hidd_boxes:
-                iid = self.hidd_boxes.pop()
-                self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
-                self.coords(iid, coords)
+            if self.hidd_borders:
+                iid = self.hidd_borders.pop()
+                self.itemconfig(iid, fill=fill, state=state, tags=tags, width=width)
+                self.coords(iid, *coords)
             else:
-                iid = self.create_polygon(
-                    coords,
+                iid = self.create_line(
+                    *coords,
                     fill=fill,
-                    outline=outline,
                     state=state,
                     tags=tags,
                     width=width,
                     smooth=True,
                 )
-            self.disp_boxes.add(iid)
+            self.disp_borders.add(iid)
         return iid
 
-    def hide_box(self, item: int | None) -> None:
+    def hide_border(self, item: int | None) -> None:
         if isinstance(item, int):
-            self.disp_boxes.discard(item)
-            self.hidd_boxes.add(item)
+            self.disp_borders.discard(item)
+            self.hidd_borders.add(item)
             self.itemconfig(item, state="hidden")
 
     def hide_box_fill(self, item: int | None) -> None:
@@ -7098,7 +6894,7 @@ class MainTable(tk.Canvas):
             return False
         box = self.selection_boxes.pop(item)
         self.hide_box_fill(box.fill_iid)
-        self.hide_box(box.bd_iid)
+        self.hide_border(box.bd_iid)
         if self.selected.fill_iid == item:
             self.hide_selected()
             self.set_current_to_last()
@@ -7112,7 +6908,7 @@ class MainTable(tk.Canvas):
 
     def hide_selected(self) -> None:
         if self.selected:
-            self.hide_box(self.selected.iid)
+            self.hide_border(self.selected.iid)
             self.selected = ()
 
     def get_selection_fill(self) -> int:
@@ -7150,39 +6946,20 @@ class MainTable(tk.Canvas):
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if self.selection_boxes:
             next(reversed(self.selection_boxes.values())).state = "normal"
-        x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2, type_)
+        x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2)
         fill_iid = self.get_selection_fill()
         bd_iid = None
-        # fill might not display if canvas is wider than 32k pixels
-        if self.PAR.ops.selected_rows_to_end_of_window and type_ == "rows":
-            bd_iid = self.display_box(
-                x1,
-                y1,
-                x2,
-                y2,
-                fill=self.PAR.ops.table_selected_rows_bg,
-                outline=""
-                if self.PAR.name == "!SheetDropdown"
-                else mt_border_col
-                if self.PAR.ops.show_selected_cells_border
-                else "",
-                state="normal",
-                tags=f"{type_}bd",
-                width=1,
-            )
-            self.tag_lower(bd_iid)
-        elif self.PAR.ops.show_selected_cells_border and (
+        if self.PAR.ops.show_selected_cells_border and (
             ext
             or self.ctrl_b1_pressed
             or (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
         ):
-            bd_iid = self.display_box(
+            bd_iid = self.display_border(
                 x1,
                 y1,
-                x2,
+                self.canvasx(self.winfo_width()) if self.PAR.name == "!SheetDropdown" else x2,
                 y2,
-                fill="",
-                outline=mt_border_col,
+                fill=mt_border_col,
                 state="normal",
                 tags=f"{type_}bd",
                 width=1,
@@ -7209,22 +6986,8 @@ class MainTable(tk.Canvas):
             self.run_selection_binding(type_)
         return fill_iid
 
-    def box_coords_x_canvas_coords(
-        self,
-        r1: int,
-        c1: int,
-        r2: int,
-        c2: int,
-        type_: Literal["cells", "rows", "columns"],
-    ) -> tuple[float, float, float, float]:
-        x1 = self.col_positions[c1]
-        y1 = self.row_positions[r1]
-        y2 = self.row_positions[r2]
-        if type_ == "rows" and self.PAR.ops.selected_rows_to_end_of_window:
-            x2 = self.canvasx(self.winfo_width())
-        else:
-            x2 = self.col_positions[c2]
-        return x1, y1, x2, y2
+    def box_coords_x_canvas_coords(self, r1: int, c1: int, r2: int, c2: int) -> tuple[float, float, float, float]:
+        return self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2]
 
     def recreate_selection_box(
         self,
@@ -7253,17 +7016,16 @@ class MainTable(tk.Canvas):
                 state = "normal"
         if self.selected.fill_iid == fill_iid:
             self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
-        x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2, type_)
+        x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2)
         self.selection_boxes[fill_iid].state = state
         if bd_iid := self.selection_boxes[fill_iid].bd_iid:
             if self.PAR.ops.show_selected_cells_border:
-                self.display_box(
+                self.display_border(
                     x1,
                     y1,
                     x2,
                     y2,
-                    fill="",
-                    outline=mt_border_col,
+                    fill=mt_border_col,
                     state="normal",
                     tags=f"{type_}bd",
                     width=1,
@@ -7271,7 +7033,7 @@ class MainTable(tk.Canvas):
                 )
                 self.tag_raise(bd_iid)
             else:
-                self.hide_box(bd_iid)
+                self.hide_border(bd_iid)
         if run_binding:
             self.run_selection_binding(type_)
         return fill_iid
@@ -7727,19 +7489,8 @@ class MainTable(tk.Canvas):
         value = self.text_editor.get()
         r, c = self.text_editor.coords
         datarn, datacn = self.datarn(r), self.datacn(c)
-        event_data = event_dict(
-            name="end_edit_table",
-            sheet=self.PAR.name,
-            widget=self,
-            cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
-            key=event.keysym,
-            value=value,
-            loc=Loc(r, c),
-            row=r,
-            column=c,
-            boxes=self.get_boxes(),
-            selected=self.selected,
-            data={(datarn, datacn): value},
+        event_data = self.new_single_edit_event(
+            r, c, datarn, datacn, event.keysym, self.get_cell_data(datarn, datacn), value
         )
         value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
         edited = False
@@ -8034,19 +7785,8 @@ class MainTable(tk.Canvas):
             datacn = self.datacn(c)
             datarn = self.datarn(r)
             kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            event_data = event_dict(
-                name="end_edit_table",
-                sheet=self.PAR.name,
-                widget=self,
-                cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
-                key="??",
-                value=selection,
-                loc=Loc(r, c),
-                row=r,
-                column=c,
-                boxes=self.get_boxes(),
-                selected=self.selected,
-                data={(datarn, datacn): selection},
+            event_data = self.new_single_edit_event(
+                r, c, datarn, datacn, "??", self.get_cell_data(datarn, datacn), selection
             )
             try_binding(kwargs["select_function"], event_data)
             selection, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
@@ -8118,20 +7858,7 @@ class MainTable(tk.Canvas):
                 cell_resize=False,
                 check_input_valid=False,
             )
-            event_data = event_dict(
-                name="end_edit_table",
-                sheet=self.PAR.name,
-                widget=self,
-                cells_table={(datarn, datacn): pre_edit_value},
-                key="??",
-                value=value,
-                loc=Loc(r, c),
-                row=r,
-                column=c,
-                boxes=self.get_boxes(),
-                selected=self.selected,
-                data={(datarn, datacn): value},
-            )
+            event_data = self.new_single_edit_event(r, c, datarn, datacn, "??", pre_edit_value, value)
             if kwargs["check_function"] is not None:
                 kwargs["check_function"](event_data)
             try_binding(self.extra_end_edit_cell_func, event_data)
@@ -8227,20 +7954,22 @@ class MainTable(tk.Canvas):
         ):
             return False
         elif (
-            (
-                kwargs := self.get_cell_kwargs(
-                    datarn,
-                    datacn,
-                    key="dropdown",
-                    cell=r_ops and c_ops,
-                    row=r_ops,
-                    column=c_ops,
-                )
+            kwargs := self.get_cell_kwargs(
+                datarn,
+                datacn,
+                key="dropdown",
+                cell=r_ops and c_ops,
+                row=r_ops,
+                column=c_ops,
             )
-            and kwargs["validate_input"]
-            and kwargs["values"]
-        ):
-            return kwargs["values"][0]
+        ) and kwargs["validate_input"]:
+            if kwargs["default_value"] is None:
+                if kwargs["values"]:
+                    return safe_copy(kwargs["values"][0])
+                else:
+                    return self.format_value(datarn, datacn, "")
+            else:
+                return safe_copy(kwargs["default_value"])
         else:
             return self.format_value(datarn, datacn, "")
 
