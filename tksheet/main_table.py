@@ -5389,21 +5389,23 @@ class MainTable(tk.Canvas):
         else:
             if data_indexes:
                 data_rows = rows
-                disp_rows = data_to_displayed_idxs(data_rows, self.displayed_rows)
+                # dont create disp_rows twice when using treeview mode
+                disp_rows = [] if self.PAR.ops.treeview else data_to_displayed_idxs(data_rows, self.displayed_rows)
             else:
                 data_rows = [self.displayed_rows[r] for r in rows]
                 disp_rows = rows
         if self.PAR.ops.treeview:
-            data_rows = sorted(
-                chain(
-                    data_rows,
-                    (
-                        self.RI.rns[did]
-                        for r in data_rows
-                        for did in self.RI.get_iid_descendants(self._row_index[r].iid)
-                    ),
-                )
-            )
+            # remove any included descendants &
+            # add all item descendants back in for safety,
+            # update disp rows to del afterwards
+            iids = {self._row_index[r].iid for r in data_rows}
+            all_iids = set()
+            for iid in iids:
+                if not any(ancestor in iids for ancestor in self.RI.get_iid_ancestors(iid)):
+                    all_iids.add(iid)
+                    all_iids.update(self.RI.get_iid_descendants(iid))
+            data_rows = sorted(map(self.RI.rns.__getitem__, all_iids))
+            disp_rows = data_to_displayed_idxs(data_rows, self.displayed_rows)
         event_data = self.delete_rows_displayed(
             disp_rows,
             event_data,
@@ -6825,7 +6827,7 @@ class MainTable(tk.Canvas):
             y2,
             fill=outline if self.PAR.ops.show_selected_cells_border else "",
             state="normal",
-            tags="selected",
+            tags=("selected", "lift"),
             width=2,
         )
         self.selected = Selected(

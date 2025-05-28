@@ -2849,14 +2849,14 @@ class RowIndex(tk.Canvas):
                         # determine insert row
                         insert_row = self.PAR._get_id_insert_row(move_to_index, new_parent)
                 else:
+                    # remove any descendants
                     iids = {self.MT._row_index[r].iid for r in event_data["moved"]["rows"]["data"]}
-                    iids_descendants = {iid: set(self.get_iid_descendants(iid)) for iid in iids}
-
-                    # remove descendants in iids to move
-                    iids -= set.union(*iids_descendants.values()) & iids
-                    moved_rows = sorted(map(self.rns.__getitem__, iids))
+                    moved_rows = sorted(
+                        self.rns[iid]
+                        for iid in iids
+                        if not any(ancestor in iids for ancestor in self.get_iid_ancestors(iid))
+                    )
                     item = self.MT._row_index[moved_rows[0]].iid
-
                     if isinstance(event_data.value, int):
                         if event_data.value >= len(self.MT.displayed_rows):
                             insert_row = len(self.MT._row_index)

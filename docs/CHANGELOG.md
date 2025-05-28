@@ -1,5 +1,10 @@
 ### Version 7.5.8
-####
+#### Fixed:
+- Currently selected cell box not showing.
+- Potential issues when using `del_rows()` in treeview mode.
+
+#### Improved:
+- Slight improvement to performance of moving rows while in treeview mode.
 
 ### Version 7.5.7
 #### Added:
