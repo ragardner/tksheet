@@ -1,3 +1,6 @@
+### Version 7.5.9
+####
+
 ### Version 7.5.8
 #### Fixed:
 - Currently selected cell box not showing.
