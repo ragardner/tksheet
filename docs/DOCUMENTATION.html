@@ -7034,7 +7034,7 @@ tree_selected() -&gt; str | None:
 </ul>
 <hr />
 <h4 id="delete-treeview-items"><strong>Delete treeview items</strong></h4>
-<pre><code class="language-python">del_items(*items) -&gt; Sheet
+<pre><code class="language-python">del_items(*items, undo: bool = True) -&gt; Sheet
 </code></pre>
 <ul>
 <li><code>*items</code> the iids of items to delete.</li>
@@ -7042,7 +7042,14 @@ tree_selected() -&gt; str | None:
 </ul>
 <hr />
 <h4 id="move-items-to-a-new-parent"><strong>Move items to a new parent</strong></h4>
-<pre><code class="language-python">set_children(parent: str, *newchildren) -&gt; Sheet
+<pre><code class="language-python">set_children(
+    parent: str,
+    *newchildren: str,
+    index: int | None = None,
+    select: bool = True,
+    undo: bool = True,
+    emit_event: bool = False,
+) -&gt; Sheet
 </code></pre>
 <ul>
 <li><code>parent</code> the new parent for the items.</li>
