@@ -1,3 +1,6 @@
+### Version 7.5.10
+####
+
 ### Version 7.5.9
 #### Fixed:
 - Treeview mode regression: when opening (showing) a row using a mouse click with undo enabled the undo stack was mistakenly being added to, this is no longer the case.
