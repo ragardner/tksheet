@@ -4980,14 +4980,6 @@ class Sheet(tk.Frame):
             self.del_rows(rows, data_indexes=True, undo=undo)
         return self.set_refresh_timer(rows)
 
-    def set_children(self, parent: str, *newchildren) -> Sheet:
-        """
-        Moves everything in '*newchildren' under 'parent'
-        """
-        for iid in unpack(newchildren):
-            self.move(iid, parent)
-        return self
-
     def top_index_row(self, index: int) -> int:
         try:
             return next(self.RI.rns[n.iid] for i, n in enumerate(self.RI.gen_top_nodes()) if i == index)
@@ -5009,9 +5001,9 @@ class Sheet(tk.Frame):
         """
         if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        if parent and parent not in self.RI.rns:
+        elif parent and parent not in self.RI.rns:
             raise ValueError(f"Parent '{parent}' does not exist.")
-        if self.RI.move_pid_causes_recursive_loop(item, parent):
+        elif self.RI.move_pid_causes_recursive_loop(item, parent):
             raise ValueError(f"Item '{item}' causes recursive loop with parent '{parent}.")
         data_new_idxs, disp_new_idxs, event_data = self.MT.move_rows_adjust_options_dict(
             data_new_idxs={},
@@ -5022,7 +5014,45 @@ class Sheet(tk.Frame):
             move_heights=True,
             create_selections=select,
             event_data=None,
-            node_change=(item, parent, index),
+            node_change={"iids": {item}, "new_par": parent, "index": index},
+        )
+        if undo:
+            self.MT.undo_stack.append(stored_event_dict(event_data))
+        self.MT.sheet_modified(event_data, emit_event=emit_event)
+        self.set_refresh_timer()
+        return data_new_idxs, disp_new_idxs, event_data
+
+    def set_children(
+        self,
+        parent: str,
+        *newchildren: str,
+        index: int | None = None,
+        select: bool = True,
+        undo: bool = True,
+        emit_event: bool = False,
+    ) -> Sheet:
+        """
+        Moves everything in '*newchildren' under 'parent'
+        """
+        if parent and parent not in self.RI.rns:
+            raise ValueError(f"Parent '{parent}' does not exist.")
+        iids = set()
+        for iid in unpack(newchildren):
+            if iid not in self.RI.rns:
+                raise ValueError(f"Item '{iid}' does not exist.")
+            elif self.RI.move_pid_causes_recursive_loop(iid, parent):
+                raise ValueError(f"Item '{iid}' causes recursive loop with parent '{parent}.")
+            iids.add(iid)
+        data_new_idxs, disp_new_idxs, event_data = self.MT.move_rows_adjust_options_dict(
+            data_new_idxs={},
+            data_old_idxs={},
+            totalrows=None,
+            disp_new_idxs={},
+            move_data=True,
+            move_heights=True,
+            create_selections=select,
+            event_data=None,
+            node_change={"iids": iids, "new_par": parent, "index": index},
         )
         if undo:
             self.MT.undo_stack.append(stored_event_dict(event_data))

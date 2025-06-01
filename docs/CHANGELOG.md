@@ -1,5 +1,11 @@
 ### Version 7.5.9
-####
+#### Fixed:
+- Treeview mode regression: when opening (showing) a row using a mouse click with undo enabled the undo stack was mistakenly being added to, this is no longer the case.
+
+#### Improved:
+- Treeview mode function `set_children()` now performs all moves in a single action rather than multiple moves.
+- Slight performance improvement to treeview mode move functions including `set_children()`.
+- Re-implement a basic row selection option for treeview row moving functions.
 
 ### Version 7.5.8
 #### Fixed:

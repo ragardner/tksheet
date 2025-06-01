@@ -1805,7 +1805,7 @@ class MainTable(tk.Canvas):
         create_selections: bool = True,
         event_data: EventDataDict | None = None,
         undo_modification: EventDataDict | None = None,
-        node_change: None | tuple[str, str, int] = None,
+        node_change: None | dict = None,
         manage_tree: bool = True,
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         self.saved_row_heights = {}
@@ -1965,7 +1965,10 @@ class MainTable(tk.Canvas):
                     # finally, change the span coords
                     span["from_r"], span["upto_r"] = newfrom, newupto
 
-        if (not self.PAR.ops.treeview or not undo_modification) and (move_heights and disp_new_idxs):
+        if not undo_modification and create_selections and self.PAR.ops.treeview:
+            self.PAR.selection_set(*[self._row_index[k].iid for k in data_new_idxs.values()])
+
+        elif not undo_modification and move_heights and disp_new_idxs:
             self.set_row_positions(
                 itr=move_elements_by_mapping_gen(
                     self.get_row_heights(),

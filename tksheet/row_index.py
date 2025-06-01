@@ -35,6 +35,7 @@ from .functions import (
     num2alpha,
     push_displayed,
     recursive_bind,
+    remove_duplicates_outside_section,
     rounded_box_coords,
     safe_copy,
     stored_event_dict,
@@ -884,7 +885,7 @@ class RowIndex(tk.Canvas):
                 elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
                     if self.MT.selection_boxes:
                         self.select_row(r, ext=True, redraw=False)
-                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids, undo=False)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
             self.b1_pressed_loc = None
@@ -2790,6 +2791,14 @@ class RowIndex(tk.Canvas):
 
         return event_data
 
+    def remove_descendants(self, iids: set[str]) -> tuple[list[int], set[str]]:
+        return (
+            sorted(
+                self.rns[iid] for iid in iids if not any(ancestor in iids for ancestor in self.get_iid_ancestors(iid))
+            ),
+            iids,
+        )
+
     def move_rows_mod_nodes(
         self,
         data_new_idxs: dict[int, int],
@@ -2798,7 +2807,7 @@ class RowIndex(tk.Canvas):
         maxidx: int,
         event_data: EventDataDict,
         undo_modification: EventDataDict | None = None,
-        node_change: tuple[str, str, int] | None = None,
+        node_change: dict | None = None,
     ) -> Generator[tuple[dict[int, int], dict[int, int], dict[str, int], EventDataDict]] | None:
         # data_new_idxs is {old: new, old: new}
         # data_old_idxs is {new: old, new: old}
@@ -2812,97 +2821,84 @@ class RowIndex(tk.Canvas):
 
             elif event_data["moved"]["rows"]:
                 if node_change:
-                    item = node_change[0]
-                    moved_rows = [self.rns[item]]
-                    new_parent = node_change[1]
-                    move_to_index = node_change[2]
-                    # new parent exists
+                    moved_rows, iids = self.remove_descendants(node_change["iids"])
+                    new_parent = node_change["new_par"]
+                    move_to_index = node_change["index"]
                     if new_parent:
                         new_par_cn = self.iid_children(new_parent)
-                        # determine index
+                        len_new_par_cn = len(new_par_cn)
                         if isinstance(move_to_index, int):
-                            move_to_index = min(move_to_index, len(new_par_cn))
+                            move_to_index = min(move_to_index, len_new_par_cn)
                         else:
-                            move_to_index = len(new_par_cn)
-                        # determine insert row
+                            move_to_index = len_new_par_cn
                         if not new_par_cn:
                             insert_row = self.rns[new_parent] + 1
-                        elif move_to_index >= len(new_par_cn):
+                        elif move_to_index >= len_new_par_cn:
                             insert_row = self.rns[new_par_cn[-1]] + self.num_descendants(new_par_cn[-1]) + 1
-                        elif new_parent == self.iid_parent(item):
-                            if move_to_index <= self.PAR.index(item):
-                                # Insert before the sibling at move_to_index
-                                insert_row = self.rns[new_par_cn[move_to_index]]
-                            else:
-                                # Insert after the sibling at move_to_index
-                                insert_row = self.rns[new_par_cn[move_to_index]]
-                                insert_row += 1 + self.num_descendants(new_par_cn[move_to_index])
                         else:
+                            # To get the ids to the proper index and insert row -
+                            # For every iid that is being moved under the same parent but to an
+                            # index further along we have to adjust the insert row and move to index
                             insert_row = self.rns[new_par_cn[move_to_index]]
-                    # no new parent
+                            for iid in iids:
+                                if new_parent == self.iid_parent(iid) and move_to_index > self.PAR.index(iid):
+                                    insert_row += 1 + self.num_descendants(new_par_cn[move_to_index])
+                                    move_to_index += 1
+                                    if move_to_index >= len_new_par_cn:
+                                        break
                     else:
-                        # determine index
                         if isinstance(move_to_index, int):
                             move_to_index = min(move_to_index, sum(1 for _ in self.gen_top_nodes()))
                         else:
                             move_to_index = sum(1 for _ in self.gen_top_nodes())
-                        # determine insert row
                         insert_row = self.PAR._get_id_insert_row(move_to_index, new_parent)
                 else:
-                    # remove any descendants
-                    iids = {self.MT._row_index[r].iid for r in event_data["moved"]["rows"]["data"]}
-                    moved_rows = sorted(
-                        self.rns[iid]
-                        for iid in iids
-                        if not any(ancestor in iids for ancestor in self.get_iid_ancestors(iid))
+                    moved_rows, iids = self.remove_descendants(
+                        {self.MT._row_index[r].iid for r in event_data["moved"]["rows"]["data"]}
                     )
-                    item = self.MT._row_index[moved_rows[0]].iid
                     if isinstance(event_data.value, int):
                         if event_data.value >= len(self.MT.displayed_rows):
                             insert_row = len(self.MT._row_index)
                         else:
                             insert_row = self.MT.datarn(event_data.value)
                         move_to_iid = self.MT._row_index[min(insert_row, len(self.MT._row_index) - 1)].iid
-
                     else:
                         min_from = min(event_data["moved"]["rows"]["data"])
-                        # max_from = max(event_data.moved.rows)
                         min_to = min(event_data["moved"]["rows"]["data"].values())
                         max_to = max(event_data["moved"]["rows"]["data"].values())
                         insert_row = max_to if min_from <= min_to else min_to
                         move_to_iid = self.MT._row_index[insert_row].iid
-
                     move_to_index = self.PAR.index(move_to_iid)
                     new_parent = self.iid_parent(move_to_iid)
-
-                event_data["moved"]["rows"]["data"] = {moved_rows[0]: insert_row}
+                    if any(
+                        self.move_pid_causes_recursive_loop(self.MT._row_index[r].iid, new_parent) for r in moved_rows
+                    ):
+                        event_data["moved"]["rows"], data_new_idxs, data_old_idxs = {}, {}, {}
+                        moved_rows = []
 
                 new_loc_is_displayed = not new_parent or (
                     new_parent and new_parent in self.tree_open_ids and self.PAR.item_displayed(new_parent)
                 )
-                event_data["moved"]["rows"]["displayed"] = {}
+                event_data["moved"]["rows"]["displayed"], disp_new_idxs = {}, {}
 
-                if any(self.move_pid_causes_recursive_loop(self.MT._row_index[r].iid, new_parent) for r in moved_rows):
-                    event_data["moved"]["rows"] = {}
-                    data_new_idxs, data_old_idxs, disp_new_idxs = {}, {}, {}
-
-                else:
+                if moved_rows:
+                    event_data["moved"]["rows"]["data"] = {moved_rows[0]: insert_row}
+                    iids = []
                     for r in moved_rows:
                         iid = self.MT._row_index[r].iid
-                        event_data = self.move_node(
-                            event_data=event_data,
-                            item=iid,
-                            parent=new_parent,
-                            index=move_to_index,
+                        event_data = self.move_node(event_data=event_data, item=iid, parent=new_parent)
+                        iids.append(iid)
+                    if new_parent:
+                        self.iid_node(new_parent).children[move_to_index:move_to_index] = iids
+                        self.iid_node(new_parent).children = remove_duplicates_outside_section(
+                            self.iid_children(new_parent), move_to_index, len(iids)
                         )
-                        move_to_index += 1
                     event_data["moved"]["rows"]["data"] = get_new_indexes(
                         insert_row,
                         event_data["moved"]["rows"]["data"],
                     )
                     data_new_idxs = event_data["moved"]["rows"]["data"]
                     data_old_idxs = {v: k for k, v in data_new_idxs.items()}
-                    disp_new_idxs = event_data["moved"]["rows"]["displayed"]
 
         if data_new_idxs:
             self.MT.move_rows_data(data_new_idxs, data_old_idxs, maxidx)
@@ -2919,27 +2915,16 @@ class RowIndex(tk.Canvas):
 
         yield None
 
-    def move_node(
-        self,
-        event_data: EventDataDict,
-        item: str,
-        parent: str | None = None,
-        index: int = 0,
-    ) -> EventDataDict:
+    def move_node(self, event_data: EventDataDict, item: str, parent: str | None = None) -> EventDataDict:
         # also backs up nodes
         if parent is None:
             parent = self.iid_parent(item)
-
         item_node = self.iid_node(item)
-
-        # new parent is an item
         if parent:
             parent_node = self.iid_node(parent)
             # its the same parent, we're just moving index
             if parent == item_node.parent:
                 event_data = self.copy_nodes((item, parent), event_data)
-                parent_node.children.insert(index, parent_node.children.pop(parent_node.children.index(item)))
-
             else:
                 if item_node.parent:
                     event_data = self.copy_nodes((item, item_node.parent, parent), event_data)
@@ -2947,9 +2932,6 @@ class RowIndex(tk.Canvas):
                     event_data = self.copy_nodes((item, parent), event_data)
                 self.remove_iid_from_parents_children(item)
                 item_node.parent = parent_node.iid
-                parent_node.children.insert(index, item)
-
-        # no new parent
         else:
             if item_node.parent:
                 event_data = self.copy_nodes((item, item_node.parent), event_data)
@@ -2958,7 +2940,7 @@ class RowIndex(tk.Canvas):
             self.remove_iid_from_parents_children(item)
             self.MT._row_index[self.rns[item]].parent = ""
 
-        # last row in mapping is where to start from +1
+        # last row in mapping + 1 is where to start from
         mapping = event_data["moved"]["rows"]["data"]
         row_ctr = next(reversed(mapping.values())) + 1
 
@@ -2966,13 +2948,11 @@ class RowIndex(tk.Canvas):
         if rn not in mapping:
             mapping[rn] = row_ctr
             row_ctr += 1
-
         for did in self.get_iid_descendants(item):
             mapping[self.rns[did]] = row_ctr
             row_ctr += 1
 
         event_data["moved"]["rows"]["data"] = mapping
-
         return event_data
 
     def restore_nodes(self, event_data: EventDataDict) -> None:

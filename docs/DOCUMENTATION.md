@@ -7332,7 +7332,7 @@ ___
 #### **Delete treeview items**
 
 ```python
-del_items(*items) -> Sheet
+del_items(*items, undo: bool = True) -> Sheet
 ```
 - `*items` the iids of items to delete.
 - Also deletes all item descendants.
@@ -7342,7 +7342,14 @@ ___
 #### **Move items to a new parent**
 
 ```python
-set_children(parent: str, *newchildren) -> Sheet
+set_children(
+    parent: str,
+    *newchildren: str,
+    index: int | None = None,
+    select: bool = True,
+    undo: bool = True,
+    emit_event: bool = False,
+) -> Sheet
 ```
 - `parent` the new parent for the items.
 - `*newchildren` the items to move.

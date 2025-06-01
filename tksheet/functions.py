@@ -835,6 +835,17 @@ def move_elements_to(
     )
 
 
+def remove_duplicates_outside_section(strings: list[str], section_start: int, section_size: int) -> list[str]:
+    if section_start == 0 and section_size >= len(strings):
+        return strings
+
+    section_end = section_start + section_size
+    section_set = set(strings[section_start:section_end])
+    print(section_set, section_start, section_size)
+
+    return [s for i, s in enumerate(strings) if (section_start <= i < section_end) or (s not in section_set)]
+
+
 def get_new_indexes(
     move_to: int,
     to_move: Iterable[int],
