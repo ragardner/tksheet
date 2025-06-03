@@ -1,5 +1,6 @@
 ### Version 7.5.10
-####
+#### Fixed:
+- Error with notes when using readonly cells and writable notes. [#301](https://github.com/ragardner/tksheet/issues/301).
 
 ### Version 7.5.9
 #### Fixed:

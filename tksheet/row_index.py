@@ -2037,14 +2037,15 @@ class RowIndex(tk.Canvas):
             except Exception:
                 self.tooltip.content_text.focus_set()
             return
-        if not self.tooltip.cell_readonly:
+        if not self.tooltip.cell_readonly or not self.tooltip.note_readonly:
             r, _, cell, note = self.tooltip.get()
             datarn = self.MT.datarn(r)
-            event_data = self.new_single_edit_event(r, datarn, "??", self.get_cell_data(datarn), cell)
-            self.do_single_edit(r, datarn, event_data, cell)
-        if not self.tooltip.note_readonly:
-            span = self.PAR.span(datarn).options(table=False, index=True)
-            self.PAR.note(span, note=note if note else None, readonly=False)
+            if not self.tooltip.cell_readonly:
+                event_data = self.new_single_edit_event(r, datarn, "??", self.get_cell_data(datarn), cell)
+                self.do_single_edit(r, datarn, event_data, cell)
+            if not self.tooltip.note_readonly:
+                span = self.PAR.span(datarn).options(table=False, index=True)
+                self.PAR.note(span, note=note if note else None, readonly=False)
         self.hide_tooltip()
         self.MT.refresh()
         self.focus_set()

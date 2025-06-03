@@ -6580,19 +6580,20 @@ class MainTable(tk.Canvas):
             except Exception:
                 self.tooltip.content_text.focus_set()
             return
-        if not self.tooltip.cell_readonly:
+        if not self.tooltip.cell_readonly or not self.tooltip.note_readonly:
             r, c, cell, note = self.tooltip.get()
             datarn, datacn = self.datarn(r), self.datacn(c)
-            event_data = self.new_single_edit_event(
-                r, c, datarn, datacn, "??", self.get_cell_data(datarn, datacn), cell
-            )
-            value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
-            if value is not None and (
-                self.set_cell_data_undo(r=r, c=c, datarn=datarn, datacn=datacn, value=value, redraw=False)
-            ):
-                try_binding(self.extra_end_edit_cell_func, event_data)
-        if not self.tooltip.note_readonly:
-            self.PAR.note(datarn, datacn, note=note if note else None, readonly=False)
+            if not self.tooltip.cell_readonly:
+                event_data = self.new_single_edit_event(
+                    r, c, datarn, datacn, "??", self.get_cell_data(datarn, datacn), cell
+                )
+                value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
+                if value is not None and (
+                    self.set_cell_data_undo(r=r, c=c, datarn=datarn, datacn=datacn, value=value, redraw=False)
+                ):
+                    try_binding(self.extra_end_edit_cell_func, event_data)
+            if not self.tooltip.note_readonly:
+                self.PAR.note(datarn, datacn, note=note if note else None, readonly=False)
         self.hide_tooltip()
         self.refresh()
         self.focus_set()

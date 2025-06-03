@@ -1863,14 +1863,15 @@ class ColumnHeaders(tk.Canvas):
             except Exception:
                 self.tooltip.content_text.focus_set()
             return
-        if not self.tooltip.cell_readonly:
+        if not self.tooltip.cell_readonly or not self.tooltip.note_readonly:
             _, c, cell, note = self.tooltip.get()
             datacn = self.MT.datacn(c)
-            event_data = self.new_single_edit_event(c, datacn, "??", self.get_cell_data(datacn), cell)
-            self.do_single_edit(c, datacn, event_data, cell)
-        if not self.tooltip.note_readonly:
-            span = self.PAR.span(None, datacn, None, datacn + 1).options(table=False, header=True)
-            self.PAR.note(span, note=note if note else None, readonly=False)
+            if not self.tooltip.cell_readonly:
+                event_data = self.new_single_edit_event(c, datacn, "??", self.get_cell_data(datacn), cell)
+                self.do_single_edit(c, datacn, event_data, cell)
+            if not self.tooltip.note_readonly:
+                span = self.PAR.span(None, datacn, None, datacn + 1).options(table=False, header=True)
+                self.PAR.note(span, note=note if note else None, readonly=False)
         self.hide_tooltip()
         self.MT.refresh()
         self.focus_set()
