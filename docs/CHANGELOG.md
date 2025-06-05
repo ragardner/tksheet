@@ -1,3 +1,6 @@
+### Version 7.5.12
+####
+
 ### Version 7.5.11
 #### Changed:
 - Option `user_can_create_notes` now overrides cells made `readonly` but not notes created by the `note()` function that are readonly.
