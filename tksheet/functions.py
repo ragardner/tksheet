@@ -841,9 +841,19 @@ def remove_duplicates_outside_section(strings: list[str], section_start: int, se
 
     section_end = section_start + section_size
     section_set = set(strings[section_start:section_end])
-    print(section_set, section_start, section_size)
 
     return [s for i, s in enumerate(strings) if (section_start <= i < section_end) or (s not in section_set)]
+
+
+def any_editor_or_dropdown_open(MT) -> bool:
+    return (
+        MT.dropdown.open
+        or MT.RI.dropdown.open
+        or MT.CH.dropdown.open
+        or MT.text_editor.open
+        or MT.RI.text_editor.open
+        or MT.CH.text_editor.open
+    )
 
 
 def get_new_indexes(

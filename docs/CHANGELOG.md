@@ -1,3 +1,18 @@
+### Version 7.5.11
+#### Changed:
+- Option `user_can_create_notes` now overrides cells made `readonly` but not notes created by the `note()` function that are readonly.
+
+#### Added:
+- Option `tooltip_hover_delay` to control how long the mouse cursor must stay still before a tooltip appears.
+
+#### Improved:
+- If tooltips/notes are being used hovering over any area of a cell will now make them appear rather than just the cells text.
+- A cell edit will now only occur when using tooltips if the tooltip editor's content changed.
+
+#### Fixed:
+- Tooltip wrongly opens while cell text editor is open.
+- Removed leftover debugging `print()` call from treeview move function.
+
 ### Version 7.5.10
 #### Fixed:
 - Error with notes when using readonly cells and writable notes. [#301](https://github.com/ragardner/tksheet/issues/301).

@@ -1045,6 +1045,7 @@ app.mainloop()
     note_corners: bool = False,
     tooltip_width: int = 210,
     tooltip_height: int = 210,
+    tooltip_hover_delay: int = 1200,
     # colors
     outline_thickness: int = 0,
     theme: str = &quot;light blue&quot;,
@@ -1744,6 +1745,7 @@ else [&quot;&lt;Home&gt;&quot;],
 &quot;note_corners&quot;: False,
 &quot;tooltip_width&quot;: int = 210,
 &quot;tooltip_height&quot;: int = 210,
+&quot;tooltip_hover_delay&quot;: int = 1200,
 </code></pre>
 <p>Notes:</p>
 <ul>
@@ -4572,7 +4574,7 @@ find_open() -&gt; bool
 </ul>
 <hr />
 <h1 id="notes-and-tooltips"><strong>Notes and tooltips</strong></h1>
-<p>When using either notes or tooltips a popup can be made to appear for associated cells when the mouse cursor <strong>remains still over a cell's text</strong> for 1sec.</p>
+<p>When using either notes or tooltips a popup can be made to appear for associated cells when the mouse cursor remains still over a cell.</p>
 <p>Tooltips and notes are two different things but both produce the same popup, if using both cell notes and tooltips then the popup with have clickable tabs.</p>
 <h2 id="cell-tooltips"><strong>Cell tooltips</strong></h2>
 <p>Cell tooltips show the cell's value, they are:</p>
@@ -4581,9 +4583,16 @@ find_open() -&gt; bool
 <li>A global setting and not for individual cells like <code>note</code>s are.</li>
 <li>Editable if the cell itself is editable - if the cell is readonly then the <code>Cell</code> tooltip should be also.</li>
 <li>Saved when the mouse leaves the tooltip popup.</li>
+</ul>
+<p>You can:</p>
+<ul>
 <li>Change the width and height of tooltip &amp; note popups using the settings:<ul>
 <li><code>set_options(tooltip_width=my_width)</code> (<code>int</code>).</li>
 <li><code>set_options(tooltip_height=my_height)</code> (<code>int</code>).</li>
+</ul>
+</li>
+<li>Change the time required for the mouse cursor to stay still before a tooltip appears:<ul>
+<li><code>set_options(tooltip_hover_delay=my_delay_in_ms)</code> (<code>int</code>).</li>
 </ul>
 </li>
 </ul>
@@ -4619,7 +4628,7 @@ find_open() -&gt; bool
 <li>Use <code>readonly</code> <code>False</code> to allow the user to edit the existing notes.</li>
 <li><code>readonly</code> is <code>True</code> by default.</li>
 </ul>
-<p>You can also allow the user to create new notes and delete notes using the setting <code>user_can_create_notes</code> e.g. <code>sheet.set_options(user_can_create_notes=True)</code>.</p>
+<p>You can also allow the user to create new notes and delete notes using the setting <code>user_can_create_notes</code> e.g. <code>sheet.set_options(user_can_create_notes=True)</code>. This allows the user to create and modify notes. This also allows note editing even in cells that have been made <code>readonly</code> in the non-note sense.</p>
 <p>If an existing note was created using the <code>note()</code> function or <code>Span.note()</code> function and <code>readonly</code> was set to <code>True</code> then the user will not be able to edit or delete that note even if <code>user_can_create_notes</code> is <code>True</code>.</p>
 <p>Examples:</p>
 <p><strong>Note for header cell in column <code>A</code>/<code>0</code>:</strong></p>

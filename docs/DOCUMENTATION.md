@@ -360,6 +360,7 @@ def __init__(
     note_corners: bool = False,
     tooltip_width: int = 210,
     tooltip_height: int = 210,
+    tooltip_hover_delay: int = 1200,
     # colors
     outline_thickness: int = 0,
     theme: str = "light blue",
@@ -1084,6 +1085,7 @@ else ["<Home>"],
 "note_corners": False,
 "tooltip_width": int = 210,
 "tooltip_height": int = 210,
+"tooltip_hover_delay": int = 1200,
 ```
 
 Notes:
@@ -4212,7 +4214,7 @@ Notes:
 ---
 # **Notes and tooltips**
 
-When using either notes or tooltips a popup can be made to appear for associated cells when the mouse cursor **remains still over a cell's text** for 1sec.
+When using either notes or tooltips a popup can be made to appear for associated cells when the mouse cursor remains still over a cell.
 
 Tooltips and notes are two different things but both produce the same popup, if using both cell notes and tooltips then the popup with have clickable tabs.
 
@@ -4224,9 +4226,14 @@ Cell tooltips show the cell's value, they are:
 - A global setting and not for individual cells like `note`s are.
 - Editable if the cell itself is editable - if the cell is readonly then the `Cell` tooltip should be also.
 - Saved when the mouse leaves the tooltip popup.
+
+You can:
+
 - Change the width and height of tooltip & note popups using the settings:
     - `set_options(tooltip_width=my_width)` (`int`).
     - `set_options(tooltip_height=my_height)` (`int`).
+- Change the time required for the mouse cursor to stay still before a tooltip appears:
+    - `set_options(tooltip_hover_delay=my_delay_in_ms)` (`int`).
 
 Activate & deactivate tooltips either at your `Sheet`s initialization:
 
@@ -4271,7 +4278,7 @@ note(*key: CreateSpanTypes, note: str | None = None, readonly: bool = True) -> S
 - Use `readonly` `False` to allow the user to edit the existing notes.
 - `readonly` is `True` by default.
 
-You can also allow the user to create new notes and delete notes using the setting `user_can_create_notes` e.g. `sheet.set_options(user_can_create_notes=True)`.
+You can also allow the user to create new notes and delete notes using the setting `user_can_create_notes` e.g. `sheet.set_options(user_can_create_notes=True)`. This allows the user to create and modify notes. This also allows note editing even in cells that have been made `readonly` in the non-note sense.
 
 If an existing note was created using the `note()` function or `Span.note()` function and `readonly` was set to `True` then the user will not be able to edit or delete that note even if `user_can_create_notes` is `True`.
 

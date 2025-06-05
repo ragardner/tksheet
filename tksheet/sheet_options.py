@@ -370,5 +370,6 @@ def new_sheet_options() -> DotDict:
             "note_corners": False,
             "tooltip_width": 210,
             "tooltip_height": 210,
+            "tooltip_hover_delay": 1200,
         }
     )

@@ -206,6 +206,7 @@ class Sheet(tk.Frame):
         note_corners: bool = False,
         tooltip_width: int = 210,
         tooltip_height: int = 210,
+        tooltip_hover_delay: int = 1200,
         # colors
         outline_thickness: int = 0,
         theme: str = "light blue",

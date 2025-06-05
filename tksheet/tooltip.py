@@ -217,7 +217,7 @@ class Tooltip(tk.Toplevel):
         self.note_scrollbar.configure(command=self.note_text.yview)
         self.note_text.configure(yscrollcommand=self.note_scrollbar.set)
 
-    def setup_note_only_mode(self):
+    def setup_note_only_mode(self) -> None:
         """Configure the tooltip to show only the note text widget."""
         self.notebook.pack_forget()  # Remove notebook from layout
         for tab in self.notebook.tabs():  # Clear all tabs to free the frames
@@ -225,7 +225,7 @@ class Tooltip(tk.Toplevel):
         self.content_frame.pack_forget()  # Ensure content_frame is not directly packed
         self.note_frame.pack(fill="both", expand=True)  # Show note_frame directly
 
-    def setup_single_text_mode(self):
+    def setup_single_text_mode(self) -> None:
         """Configure the tooltip to show only the content text widget."""
         self.notebook.pack_forget()  # Remove notebook from layout
         for tab in self.notebook.tabs():  # Clear all tabs
@@ -233,7 +233,7 @@ class Tooltip(tk.Toplevel):
         self.note_frame.pack_forget()  # Ensure note_frame is not directly packed
         self.content_frame.pack(fill="both", expand=True)  # Show content_frame directly
 
-    def setup_notebook_mode(self):
+    def setup_notebook_mode(self) -> None:
         """Configure the tooltip to show a notebook with Cell and Note tabs."""
         self.content_frame.pack_forget()  # Ensure content_frame is not directly packed
         self.note_frame.pack_forget()  # Ensure note_frame is not directly packed

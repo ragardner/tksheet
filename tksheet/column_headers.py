@@ -20,6 +20,7 @@ from .constants import (
 )
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
+    any_editor_or_dropdown_open,
     consecutive_ranges,
     event_dict,
     event_has_char_key,
@@ -49,7 +50,7 @@ from .tooltip import Tooltip
 
 
 class ColumnHeaders(tk.Canvas):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent: tk.Misc, **kwargs) -> None:
         super().__init__(
             parent,
             background=parent.ops.header_bg,
@@ -72,6 +73,7 @@ class ColumnHeaders(tk.Canvas):
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
         self.tooltip_coords, self.tooltip_after_id, self.tooltip_showing = None, None, False
+        self.tooltip_cell_content = ""
         recursive_bind(self.tooltip, "<Leave>", self.close_tooltip_save)
         self.current_cursor = ""
         self.popup_menu_loc = None
@@ -1268,6 +1270,7 @@ class ColumnHeaders(tk.Canvas):
         selections: dict,
         datacn: int,
         has_dd: bool,
+        tags: str | tuple[str],
     ) -> tuple[str, bool]:
         redrawn = False
         kwargs = self.get_cell_kwargs(datacn, key="highlight")
@@ -1294,6 +1297,7 @@ class ColumnHeaders(tk.Canvas):
                         + f"{int((int(high_bg[5:], 16) + int(sel_cols_bg[5:], 16)) / 2):02X}"
                     ),
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tags=tags,
                 )
             elif "cells" in selections and c in selections["cells"]:
                 txtfg = (
@@ -1314,6 +1318,7 @@ class ColumnHeaders(tk.Canvas):
                         + f"{int((int(high_bg[5:], 16) + int(sel_cells_bg[5:], 16)) / 2):02X}"
                     ),
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tags=tags,
                 )
             else:
                 txtfg = self.ops.header_fg if kwargs[1] is None else kwargs[1]
@@ -1325,6 +1330,7 @@ class ColumnHeaders(tk.Canvas):
                         self.current_height - 1,
                         fill=high_bg,
                         outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                        tags=tags,
                     )
         elif not kwargs:
             if "columns" in selections and c in selections["columns"]:
@@ -1336,6 +1342,7 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=self.ops.header_selected_columns_bg,
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tags=tags,
                 )
             elif "cells" in selections and c in selections["cells"]:
                 txtfg = self.ops.header_selected_cells_fg
@@ -1346,9 +1353,19 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=self.ops.header_selected_cells_bg,
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tags=tags,
                 )
             else:
                 txtfg = self.ops.header_fg
+                redrawn = self.redraw_highlight(
+                    fc + 1,
+                    0,
+                    sc,
+                    self.current_height - 1,
+                    fill="",
+                    outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tags=tags,
+                )
         return txtfg, redrawn
 
     def redraw_highlight(
@@ -1359,17 +1376,18 @@ class ColumnHeaders(tk.Canvas):
         y2: float,
         fill: str,
         outline: str,
+        tags: str | tuple[str],
     ) -> bool:
         coords = (x1, y1, x2, y2)
         if self.hidd_high:
             iid, showing = self.hidd_high.popitem()
             self.coords(iid, coords)
             if showing:
-                self.itemconfig(iid, fill=fill, outline=outline)
+                self.itemconfig(iid, fill=fill, outline=outline, tags=tags)
             else:
-                self.itemconfig(iid, fill=fill, outline=outline, state="normal")
+                self.itemconfig(iid, fill=fill, outline=outline, state="normal", tags=tags)
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline)
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags=tags)
         self.disp_high[iid] = True
         return True
 
@@ -1402,8 +1420,8 @@ class ColumnHeaders(tk.Canvas):
         draw_arrow: bool = True,
         open_: bool = False,
     ) -> None:
-        if draw_outline and self.ops.show_dropdown_borders:
-            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.ops.header_fg)
+        # if draw_outline and self.ops.show_dropdown_borders:
+        #     self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.ops.header_fg)
         if draw_arrow:
             mod = (self.MT.header_txt_height - 1) if self.MT.header_txt_height % 2 else self.MT.header_txt_height
             small_mod = int(mod / 5)
@@ -1506,15 +1524,15 @@ class ColumnHeaders(tk.Canvas):
             self.MT.char_widths[self.header_font][c] = wd
             return wd
 
-    def redraw_corner(self, x: float, y: float) -> None:
+    def redraw_corner(self, x: float, y: float, tags: str | tuple[str]) -> None:
         if self.hidd_corners:
             iid = self.hidd_corners.pop()
             self.coords(iid, x - 10, y, x, y, x, y + 10)
-            self.itemconfig(iid, fill=self.ops.header_grid_fg, state="normal")
+            self.itemconfig(iid, fill=self.ops.header_grid_fg, state="normal", tags=tags)
             self.disp_corners.add(iid)
         else:
             self.disp_corners.add(
-                self.create_polygon(x - 10, y, x, y, x, y + 10, fill=self.ops.header_grid_fg, tags="lift")
+                self.create_polygon(x - 10, y, x, y, x, y + 10, fill=self.ops.header_grid_fg, tags=tags)
             )
 
     def redraw_grid_and_text(
@@ -1552,7 +1570,6 @@ class ColumnHeaders(tk.Canvas):
             self.current_height,
         )
         top = self.canvasy(0)
-
         if (self.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
             yend = self.current_height - 5
             points = [
@@ -1580,7 +1597,6 @@ class ColumnHeaders(tk.Canvas):
                     )
                 )
             self.redraw_gridline(points=points, fill=self.ops.header_grid_fg, width=1)
-
         sel_cells_bg = (
             self.ops.header_selected_cells_bg
             if self.ops.header_selected_cells_bg.startswith("#")
@@ -1603,6 +1619,7 @@ class ColumnHeaders(tk.Canvas):
             crightgridln = self.MT.col_positions[c + 1]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             kwargs = self.get_cell_kwargs(datacn, key="dropdown")
+            tag = f"{c}"
             fill, dd_drawn = self.redraw_highlight_get_text_fg(
                 fc=cleftgridln,
                 sc=crightgridln,
@@ -1612,6 +1629,7 @@ class ColumnHeaders(tk.Canvas):
                 selections=selections,
                 datacn=datacn,
                 has_dd=bool(kwargs),
+                tags=("h", "c", tag),
             )
             if datacn in self.cell_options and "align" in self.cell_options[datacn]:
                 align = self.cell_options[datacn]["align"]
@@ -1675,10 +1693,9 @@ class ColumnHeaders(tk.Canvas):
                 or (align[-1] == "n" and cleftgridln + 5 > scrollpos_right)
             ):
                 continue
-
+            tags = ("lift", "c", tag)
             if note_corners and max_width > 5 and datacn in self.cell_options and "note" in self.cell_options[datacn]:
-                self.redraw_corner(crightgridln, 0)
-
+                self.redraw_corner(crightgridln, 0, tags)
             text = self.cell_str(datacn, fix=False)
             if not text:
                 continue
@@ -1701,7 +1718,7 @@ class ColumnHeaders(tk.Canvas):
                             fill=fill,
                             font=font,
                             anchor=align,
-                            tags=("lift", "t", f"{c}"),
+                            tags=tags,
                         )
                     else:
                         self.itemconfig(
@@ -1711,7 +1728,7 @@ class ColumnHeaders(tk.Canvas):
                             font=font,
                             anchor=align,
                             state="normal",
-                            tags=("lift", "t", f"{c}"),
+                            tags=tags,
                         )
                 else:
                     iid = self.create_text(
@@ -1721,7 +1738,7 @@ class ColumnHeaders(tk.Canvas):
                         fill=fill,
                         font=font,
                         anchor=align,
-                        tags=("lift", "t", f"{c}"),
+                        tags=tags,
                     )
                 self.disp_text[iid] = True
             else:
@@ -1736,7 +1753,7 @@ class ColumnHeaders(tk.Canvas):
                                 fill=fill,
                                 font=font,
                                 anchor=align,
-                                tags=("lift", "t", f"{c}"),
+                                tags=tags,
                             )
                         else:
                             self.itemconfig(
@@ -1746,7 +1763,7 @@ class ColumnHeaders(tk.Canvas):
                                 font=font,
                                 anchor=align,
                                 state="normal",
-                                tags=("lift", "t", f"{c}"),
+                                tags=tags,
                             )
                     else:
                         iid = self.create_text(
@@ -1756,7 +1773,7 @@ class ColumnHeaders(tk.Canvas):
                             fill=fill,
                             font=font,
                             anchor=align,
-                            tags=("lift", "t", f"{c}"),
+                            tags=tags,
                         )
                     self.disp_text[iid] = True
                     draw_y += self.MT.header_txt_height
@@ -1771,12 +1788,12 @@ class ColumnHeaders(tk.Canvas):
         self.tag_raise("lift")
         if self.disp_resize_lines:
             self.tag_raise("rw")
-        self.tag_bind("t", "<Enter>", self.enter_text)
-        self.tag_bind("t", "<Leave>", self.leave_text)
+        self.tag_bind("c", "<Enter>", self.enter_cell)
+        self.tag_bind("c", "<Leave>", self.leave_cell)
         return True
 
-    def enter_text(self, event: tk.Event | None = None) -> None:
-        if self.text_editor.open or self.dropdown.open:
+    def enter_cell(self, event: tk.Event | None = None) -> None:
+        if any_editor_or_dropdown_open(self.MT):
             return
         can_x, can_y = self.canvasx(event.x), self.canvasy(event.y)
         for i in self.find_overlapping(can_x - 1, can_y - 1, can_x + 1, can_y + 1):
@@ -1790,7 +1807,7 @@ class ColumnHeaders(tk.Canvas):
             except Exception:
                 continue
 
-    def leave_text(self, event: tk.Event | None = None) -> None:
+    def leave_cell(self, event: tk.Event | None = None) -> None:
         if self.tooltip_after_id is not None:
             self.after_cancel(self.tooltip_after_id)
             self.tooltip_after_id = None
@@ -1801,7 +1818,7 @@ class ColumnHeaders(tk.Canvas):
             self.tooltip_coords = None
 
     def start_tooltip_timer(self) -> None:
-        self.tooltip_after_id = self.after(1000, self.check_and_show_tooltip)
+        self.tooltip_after_id = self.after(self.ops.tooltip_hover_delay, self.check_and_show_tooltip)
 
     def check_and_show_tooltip(self, event: tk.Event | None = None) -> None:
         current_x, current_y = self.winfo_pointerx(), self.winfo_pointery()
@@ -1823,19 +1840,22 @@ class ColumnHeaders(tk.Canvas):
         kws = self.get_cell_kwargs(datacn, key="note")
         if not self.ops.tooltips and not kws and not self.ops.user_can_create_notes:
             return
+        self.MT.hide_tooltip()
+        self.RI.hide_tooltip()
         cell_readonly = self.get_cell_kwargs(datacn, "readonly") or not self.MT.index_edit_cell_enabled()
         if kws:
             note = kws["note"]
             note_readonly = kws["readonly"]
         elif self.ops.user_can_create_notes:
             note = ""
-            note_readonly = bool(cell_readonly)
+            note_readonly = False
         else:
             note = None
             note_readonly = True
+        self.tooltip_cell_content = f"{self.get_cell_data(datacn, none_to_empty_str=True)}"
         self.tooltip.reset(
             **{
-                "text": f"{self.get_cell_data(datacn, none_to_empty_str=True)}",
+                "text": self.tooltip_cell_content,
                 "cell_readonly": cell_readonly,
                 "note": note,
                 "note_readonly": note_readonly,
@@ -1855,25 +1875,18 @@ class ColumnHeaders(tk.Canvas):
     def close_tooltip_save(self, event: tk.Event | None = None) -> None:
         widget = self.winfo_containing(self.winfo_pointerx(), self.winfo_pointery())
         if any(widget == tw for tw in self.tooltip_widgets):
-            try:
-                if self.tooltip.notebook.index("current") == 0:
-                    self.tooltip.content_text.focus_set()
-                else:
-                    self.tooltip.note_text.focus_set()
-            except Exception:
-                self.tooltip.content_text.focus_set()
             return
         if not self.tooltip.cell_readonly or not self.tooltip.note_readonly:
             _, c, cell, note = self.tooltip.get()
             datacn = self.MT.datacn(c)
-            if not self.tooltip.cell_readonly:
+            if not self.tooltip.cell_readonly and cell != self.tooltip_cell_content:
                 event_data = self.new_single_edit_event(c, datacn, "??", self.get_cell_data(datacn), cell)
                 self.do_single_edit(c, datacn, event_data, cell)
             if not self.tooltip.note_readonly:
                 span = self.PAR.span(None, datacn, None, datacn + 1).options(table=False, header=True)
                 self.PAR.note(span, note=note if note else None, readonly=False)
+            self.MT.refresh()
         self.hide_tooltip()
-        self.MT.refresh()
         self.focus_set()
 
     def get_redraw_selections(self, startc: int, endc: int) -> dict[str, set[int]]:
@@ -1960,6 +1973,7 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return False
         self.hide_text_editor()
+        self.hide_tooltip()
         if not self.MT.see(0, c, keep_yscroll=True):
             self.MT.main_table_redraw_grid_and_text(True, True)
         x = self.MT.col_positions[c] + 1

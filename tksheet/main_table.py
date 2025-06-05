@@ -41,6 +41,7 @@ from .formatters import (
 )
 from .functions import (
     add_to_displayed,
+    any_editor_or_dropdown_open,
     b_index,
     bisect_in,
     box_gen_coords,
@@ -113,11 +114,11 @@ from .tooltip import Tooltip
 class MainTable(tk.Canvas):
     def __init__(
         self,
-        parent,
+        parent: tk.Misc,
         row_index_canvas: RowIndex,
         column_headers_canvas: ColumnHeaders,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(
             parent,
             background=parent.ops.table_bg,
@@ -148,6 +149,7 @@ class MainTable(tk.Canvas):
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
         self.tooltip_coords, self.tooltip_after_id, self.tooltip_showing = None, None, False
+        self.tooltip_cell_content = ""
         recursive_bind(self.tooltip, "<Leave>", self.close_tooltip_save)
         self.dropdown = DropdownStorage()
         self.text_editor = TextEditorStorage()
@@ -5695,7 +5697,8 @@ class MainTable(tk.Canvas):
         can_width: int | None,
         dont_blend: bool,
         alternate_color: Highlight | None,
-        has_dd: bool = False,
+        has_dd: bool,
+        tags: str | tuple[str],
     ) -> tuple[str, bool]:
         redrawn = False
         if (datarn, datacn) in self.progress_bars:
@@ -5745,6 +5748,7 @@ class MainTable(tk.Canvas):
                         )
                     ),
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
@@ -5771,6 +5775,7 @@ class MainTable(tk.Canvas):
                         )
                     ),
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
@@ -5797,6 +5802,7 @@ class MainTable(tk.Canvas):
                         )
                     ),
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
@@ -5813,6 +5819,7 @@ class MainTable(tk.Canvas):
                             y2=sr,
                             fill=high_bg,
                             outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                            tags=tags,
                             can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
                             pc=None,
                         )
@@ -5827,6 +5834,7 @@ class MainTable(tk.Canvas):
                                 y2=sr,
                                 fill=high_bg,
                                 outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                                tags=tags,
                                 can_width=None,
                                 pc=kwargs.percent,
                             )
@@ -5841,6 +5849,7 @@ class MainTable(tk.Canvas):
                     y2=sr,
                     fill=self.PAR.ops.table_selected_cells_bg,
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
@@ -5853,6 +5862,7 @@ class MainTable(tk.Canvas):
                     y2=sr,
                     fill=self.PAR.ops.table_selected_rows_bg,
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
@@ -5865,11 +5875,23 @@ class MainTable(tk.Canvas):
                     y2=sr,
                     fill=self.PAR.ops.table_selected_columns_bg,
                     outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
                     can_width=None,
                     pc=None,
                 )
             else:
                 txtfg = self.PAR.ops.table_fg
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill="",
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    tags=tags,
+                    can_width=None,
+                    pc=None,
+                )
         return txtfg, redrawn
 
     def redraw_highlight(
@@ -5880,6 +5902,7 @@ class MainTable(tk.Canvas):
         y2: int | float,
         fill: str,
         outline: str,
+        tags: str | tuple[str],
         can_width: None | float = None,
         pc: None | float = None,
     ) -> bool:
@@ -5898,11 +5921,11 @@ class MainTable(tk.Canvas):
             iid, showing = self.hidd_high.popitem()
             self.coords(iid, coords)
             if showing:
-                self.itemconfig(iid, fill=fill, outline=outline)
+                self.itemconfig(iid, fill=fill, outline=outline, tags=tags)
             else:
-                self.itemconfig(iid, fill=fill, outline=outline, state="normal")
+                self.itemconfig(iid, fill=fill, outline=outline, state="normal", tags=tags)
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline)
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags=tags)
         self.disp_high[iid] = True
         return True
 
@@ -6083,15 +6106,15 @@ class MainTable(tk.Canvas):
             self.char_widths[self.table_font][c] = wd
             return wd
 
-    def redraw_corner(self, x: float, y: float) -> None:
+    def redraw_corner(self, x: float, y: float, tags: str | tuple[str]) -> None:
         if self.hidd_corners:
             iid = self.hidd_corners.pop()
             self.coords(iid, x - 10, y, x, y, x, y + 10)
-            self.itemconfig(iid, fill=self.PAR.ops.table_grid_fg, state="normal")
+            self.itemconfig(iid, fill=self.PAR.ops.table_grid_fg, state="normal", tags=tags)
             self.disp_corners.add(iid)
         else:
             self.disp_corners.add(
-                self.create_polygon(x - 10, y, x, y, x, y + 10, fill=self.PAR.ops.table_grid_fg, tags="lift")
+                self.create_polygon(x - 10, y, x, y, x, y + 10, fill=self.PAR.ops.table_grid_fg, tags=tags)
             )
 
     def redraw_grid_and_text(
@@ -6210,15 +6233,14 @@ class MainTable(tk.Canvas):
             rtopgridln = self.row_positions[r]
             rbotgridln = self.row_positions[r + 1]
             datarn = cells["datarn"][r]
-
             for c in range(text_start_col, text_end_col):
                 cleftgridln = self.col_positions[c]
                 crightgridln = self.col_positions[c + 1]
                 datacn = cells["datacn"][c]
                 disp_loc = (r, c)
                 loc = (datarn, datacn)
-
-                fill, dd_drawn = self.redraw_highlight_get_text_fg(
+                tag = f"{r}_{c}"
+                fill, _ = self.redraw_highlight_get_text_fg(
                     r=r,
                     c=c,
                     fc=cleftgridln,
@@ -6235,6 +6257,7 @@ class MainTable(tk.Canvas):
                     dont_blend=disp_loc == dont_blend,
                     alternate_color=alternate_color,
                     has_dd=loc in cells["dropdown"],
+                    tags=("h", "c", tag),
                 )
                 if loc in self.cell_options and "align" in self.cell_options[(datarn, datacn)]:
                     align = self.cell_options[(datarn, datacn)]["align"]
@@ -6261,8 +6284,8 @@ class MainTable(tk.Canvas):
                     y1 = rtopgridln
                     x2 = crightgridln
                     y2 = self.row_positions[r + 1]
-                    if not dd_drawn and self.PAR.ops.show_dropdown_borders:
-                        self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg)
+                    # if not dd_drawn and self.PAR.ops.show_dropdown_borders:
+                    #     self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg)
                     if max_width >= 5:
                         if dd_coords == disp_loc:
                             # up arrow
@@ -6362,6 +6385,8 @@ class MainTable(tk.Canvas):
                     elif align[-1] == "n":
                         draw_x = cleftgridln + (crightgridln - cleftgridln) / 2
 
+                tags = ("lift", "c", tag)
+
                 if (
                     note_corners
                     and max_width > 5
@@ -6371,12 +6396,14 @@ class MainTable(tk.Canvas):
                         or (datacn in self.col_options and "note" in self.col_options[datacn])
                     )
                 ):
-                    self.redraw_corner(crightgridln, rtopgridln)
+                    self.redraw_corner(crightgridln, rtopgridln, tags)
 
                 # redraw text
-
-                text = cells[loc]
-                if (align[-1] == "w" and draw_x > scrollpos_right) or cleftgridln + 5 > scrollpos_right:
+                if (
+                    not cells[loc]
+                    or (align[-1] == "w" and draw_x > scrollpos_right)
+                    or cleftgridln + 5 > scrollpos_right
+                ):
                     continue
                 if allow_overflow and not kws:
                     if align[-1] == "w":
@@ -6388,7 +6415,7 @@ class MainTable(tk.Canvas):
                 start_line = max(0, int((scrollpos_top - rtopgridln) / self.table_txt_height))
                 draw_y = rtopgridln + 3 + (start_line * self.table_txt_height)
                 gen_lines = wrap_text(
-                    text=text,
+                    text=cells[loc],
                     max_width=max_width,
                     max_lines=int((rbotgridln - rtopgridln - 2) / self.table_txt_height),
                     char_width_fn=self.wrap_get_char_w,
@@ -6407,7 +6434,7 @@ class MainTable(tk.Canvas):
                                 fill=fill,
                                 font=font,
                                 anchor=align,
-                                tags=("lift", "t", f"{r}_{c}"),
+                                tags=tags,
                             )
                         else:
                             self.itemconfig(
@@ -6417,7 +6444,7 @@ class MainTable(tk.Canvas):
                                 font=font,
                                 anchor=align,
                                 state="normal",
-                                tags=("lift", "t", f"{r}_{c}"),
+                                tags=tags,
                             )
                     else:
                         iid = self.create_text(
@@ -6427,7 +6454,7 @@ class MainTable(tk.Canvas):
                             fill=fill,
                             font=font,
                             anchor=align,
-                            tags=("lift", "t", f"{r}_{c}"),
+                            tags=tags,
                         )
                     self.disp_text[iid] = True
 
@@ -6443,7 +6470,7 @@ class MainTable(tk.Canvas):
                                     fill=fill,
                                     font=font,
                                     anchor=align,
-                                    tags=("lift", "t", f"{r}_{c}"),
+                                    tags=tags,
                                 )
                             else:
                                 self.itemconfig(
@@ -6453,7 +6480,7 @@ class MainTable(tk.Canvas):
                                     font=font,
                                     anchor=align,
                                     state="normal",
-                                    tags=("lift", "t", f"{r}_{c}"),
+                                    tags=tags,
                                 )
                         else:
                             iid = self.create_text(
@@ -6463,7 +6490,7 @@ class MainTable(tk.Canvas):
                                 fill=fill,
                                 font=font,
                                 anchor=align,
-                                tags=("lift", "t", f"{r}_{c}"),
+                                tags=tags,
                             )
                         self.disp_text[iid] = True
                         draw_y += self.table_txt_height
@@ -6487,10 +6514,12 @@ class MainTable(tk.Canvas):
             if self.selected:
                 self.tag_raise(self.selected.iid)
         self.lift("lift")
-        self.tag_bind("t", "<Enter>", self.enter_text)
-        self.tag_bind("t", "<Leave>", self.leave_text)
+        self.tag_bind("c", "<Enter>", self.enter_cell)
+        self.tag_bind("c", "<Leave>", self.leave_cell)
 
-    def enter_text(self, event: tk.Event | None = None) -> None:
+    def enter_cell(self, event: tk.Event | None = None) -> None:
+        if any_editor_or_dropdown_open(self):
+            return
         can_x, can_y = self.canvasx(event.x), self.canvasy(event.y)
         for i in self.find_overlapping(can_x - 1, can_y - 1, can_x + 1, can_y + 1):
             try:
@@ -6503,7 +6532,7 @@ class MainTable(tk.Canvas):
             except Exception:
                 continue
 
-    def leave_text(self, event: tk.Event | None = None) -> None:
+    def leave_cell(self, event: tk.Event | None = None) -> None:
         if self.tooltip_after_id is not None:
             self.after_cancel(self.tooltip_after_id)
             self.tooltip_after_id = None
@@ -6514,7 +6543,7 @@ class MainTable(tk.Canvas):
             self.tooltip_coords = None
 
     def start_tooltip_timer(self) -> None:
-        self.tooltip_after_id = self.after(1000, self.check_and_show_tooltip)
+        self.tooltip_after_id = self.after(self.PAR.ops.tooltip_hover_delay, self.check_and_show_tooltip)
 
     def check_and_show_tooltip(self, event: tk.Event | None = None) -> None:
         current_x, current_y = self.winfo_pointerx(), self.winfo_pointery()
@@ -6539,20 +6568,23 @@ class MainTable(tk.Canvas):
         kws = self.get_cell_kwargs(datarn, datacn, key="note")
         if not self.PAR.ops.tooltips and not kws and not self.PAR.ops.user_can_create_notes:
             return
+        self.CH.hide_tooltip()
+        self.RI.hide_tooltip()
         cell_readonly = self.get_cell_kwargs(datarn, datacn, "readonly") or not self.table_edit_cell_enabled()
         if kws:
             note = kws["note"]
             note_readonly = kws["readonly"]
         elif self.PAR.ops.user_can_create_notes:
             note = ""
-            note_readonly = bool(cell_readonly)
+            note_readonly = False
         else:
             note = None
             note_readonly = True
         note_only = not self.PAR.ops.tooltips and isinstance(note, str)
+        self.tooltip_cell_content = f"{self.get_cell_data(datarn, datacn, none_to_empty_str=True)}"
         self.tooltip.reset(
             **{
-                "text": f"{self.get_cell_data(datarn, datacn, none_to_empty_str=True)}",
+                "text": self.tooltip_cell_content,
                 "cell_readonly": cell_readonly,
                 "note": note,
                 "note_readonly": note_readonly,
@@ -6572,30 +6604,22 @@ class MainTable(tk.Canvas):
     def close_tooltip_save(self, event: tk.Event | None = None) -> None:
         widget = self.winfo_containing(self.winfo_pointerx(), self.winfo_pointery())
         if any(widget == tw for tw in self.tooltip_widgets):
-            try:
-                if self.tooltip.notebook.index("current") == 0:
-                    self.tooltip.content_text.focus_set()
-                else:
-                    self.tooltip.note_text.focus_set()
-            except Exception:
-                self.tooltip.content_text.focus_set()
             return
         if not self.tooltip.cell_readonly or not self.tooltip.note_readonly:
             r, c, cell, note = self.tooltip.get()
             datarn, datacn = self.datarn(r), self.datacn(c)
-            if not self.tooltip.cell_readonly:
+            if not self.tooltip.cell_readonly and cell != self.tooltip_cell_content:
                 event_data = self.new_single_edit_event(
                     r, c, datarn, datacn, "??", self.get_cell_data(datarn, datacn), cell
                 )
                 value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
-                if value is not None and (
+                if value is not None:
                     self.set_cell_data_undo(r=r, c=c, datarn=datarn, datacn=datacn, value=value, redraw=False)
-                ):
                     try_binding(self.extra_end_edit_cell_func, event_data)
             if not self.tooltip.note_readonly:
                 self.PAR.note(datarn, datacn, note=note if note else None, readonly=False)
+            self.refresh()
         self.hide_tooltip()
-        self.refresh()
         self.focus_set()
 
     def main_table_redraw_grid_and_text(
@@ -7344,6 +7368,7 @@ class MainTable(tk.Canvas):
             self.text_editor.window.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return False
         self.hide_text_editor()
+        self.hide_tooltip()
         if not self.see(r, c):
             self.main_table_redraw_grid_and_text(True, True)
         x = self.col_positions[c]
