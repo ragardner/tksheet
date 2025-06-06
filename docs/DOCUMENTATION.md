@@ -1200,7 +1200,7 @@ my_sheet.set_options(allow_cell_overflow=True)
 - It is only available as a global setting for the table, not on a cell by cell basis.
 
 ---
-# **Table functionality and bindings**
+# **Table Functionality and Bindings**
 
 #### **Enable table functionality and bindings**
 
