@@ -9,6 +9,8 @@
 
 [![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases) [![Downloads](https://img.shields.io/pypi/dm/tksheet.svg)](https://pypi.org/project/tksheet/)
 
+With apologies, development of this library has ceased except for bug fixes or behavioral issues. Pull requests for other changes are unlikely to be merged.
+
 <table>
   <thead>
     <tr>
@@ -28,13 +30,10 @@
       <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md" target="_blank">Changelog</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions" target="_blank">Questions</a></td>
-    </tr>
-    <tr>
       <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues" target="_blank">Issues</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions" target="_blank">Suggestions and Contributors</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#contributions-and-special-thanks" target="_blank">Contributions and Thanks</a></td>
     </tr>
   </tbody>
 </table>

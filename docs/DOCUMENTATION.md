@@ -8396,26 +8396,6 @@ tksheet is released under the MIT License. You can find the full text of the lic
 
 By contributing to the tksheet project, you agree to license your contributions under the same MIT License. Please make sure to read and understand the terms and conditions of the license before contributing.
 
-### **Contributing Code**
-
-To contribute, please follow these steps:
-
-1. Fork the tksheet repository.
-2. If you are working on a new feature, create a new branch for your contribution. Use a descriptive name for the branch that reflects the feature you're working on.
-3. Make your changes in your local branch, following the code style and conventions established in the project.
-4. Test your changes thoroughly to ensure they do not introduce any new bugs or issues.
-5. Submit a pull request to the `main` branch of the tksheet repository, including a clear title and detailed description of your changes. Pull requests ideally should include a small but comprehensive demonstration of the feature you are adding.
-6. Don't forget to update the documentation!
-
-***Note:*** If you're submitting a bugfix, it's generally preferred to submit it directly to the relevant branch, rather than creating a separate branch.
-
-### **Asking Questions**
-
-Got a question that hasn't been answered in the closed issues or is missing from the documentation? please follow these guidelines:
-
-- Submit your question as an issue in the [Issues tab](https://github.com/ragardner/tksheet/issues).
-- Provide a clear and concise description of your question, including any relevant details or examples that can help us understand your query better.
-
 ### **Issues**
 
 Please use the [Issues tab](https://github.com/ragardner/tksheet/issues) to report any issues or ask for assistance.
@@ -8427,15 +8407,15 @@ When submitting an issue, please follow these guidelines:
 - If asking a question or seeking help, provide a clear and concise description of your question or issue, including any relevant details or examples that can help people understand your query better.
 - Include any relevant screenshots or gifs that can visually illustrate the issue or your question.
 
-### **Enhancements or Suggestions**
+### **Contributions and Special Thanks**
 
-If you have an idea for a new feature, improvement or change, please follow these guidelines:
+With apologies, development of this library has ceased except for:
 
-- Submit your suggestion as an issue in the [Issues tab](https://github.com/ragardner/tksheet/issues).
-- Include a clear and concise description of your idea, including any relevant details, screenshots, or mock-ups that can help contributors understand your suggestion better.
-- You're also welcome to become a contributor yourself and help implement your idea!
+- Bug fixes.
+- Behavioral issues.
+- Documentation.
 
-### **Contributors and Special Thanks**
+Pull requests for anything else are unlikely to be merged.
 
 A special thank you to:
 
