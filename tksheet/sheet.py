@@ -5155,11 +5155,11 @@ class Sheet(tk.Frame):
         return self.set_refresh_timer(redraw)
 
     def selection_add(self, *items, run_binding: bool = True, redraw: bool = True) -> Sheet:
-        to_open = []
+        to_open = set()
         quick_displayed_check = set(self.MT.displayed_rows)
         for item in filter(self.RI.rns.__contains__, unpack(items)):
             if self.RI.rns[item] not in quick_displayed_check and self.RI.iid_parent(item):
-                to_open.extend(list(self.RI.get_iid_ancestors(item)))
+                to_open.update(self.RI.get_iid_ancestors(item))
         if to_open:
             self.show_rows(
                 rows=self._tree_open(to_open),
