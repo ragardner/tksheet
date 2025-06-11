@@ -118,7 +118,7 @@ class demo(tk.Tk):
         # AND bind all sheet modification events to a function
         # chained as two functions
         # more information at:
-        # #validate-user-cell-edits
+        # #bind-and-validate-user-cell-edits
         self.sheet.edit_validation(self.validate_edits).bind("<<SheetModified>>", self.sheet_modified)
 
         # add some new commands to the in-built right click menu
@@ -1285,12 +1285,12 @@ Notes:
 
 ___
 
-#### **Bind specific table functionality**
+#### **Bind specific table functionality like cell edits**
 
 This function allows you to bind **very** specific table functionality to your own functions:
 
 - If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](#tkinter-and-tksheet-events).
-- If you want to validate/modify user cell edits [see here](#validate-user-cell-edits).
+- If you want to validate/modify user cell edits [see here](#bind-and-validate-user-cell-edits).
 
 ```python
 extra_bindings(
@@ -1319,7 +1319,16 @@ Undo/Redo:
 - `"begin_undo", "begin_ctrl_z"`
 - `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
 
-Editing:
+Editing Individual Cells:
+
+- `"begin_edit_cell", "begin_edit_table"`
+- `"end_edit_cell", "edit_cell", "edit_table"`
+- `"begin_edit_header"`
+- `"end_edit_header", "edit_header"`
+- `"begin_edit_index"`
+- `"end_edit_index", "edit_index"`
+
+Editing or Copying Multiple Cells:
 
 - `"begin_copy", "begin_ctrl_c"`
 - `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
@@ -1329,12 +1338,6 @@ Editing:
 - `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
 - `"begin_delete_key", "begin_delete"`
 - `"delete_key", "end_delete", "end_delete_key", "delete"`
-- `"begin_edit_cell", "begin_edit_table"`
-- `"end_edit_cell", "edit_cell", "edit_table"`
-- `"begin_edit_header"`
-- `"end_edit_header", "edit_header"`
-- `"begin_edit_index"`
-- `"end_edit_index", "edit_index"`
 - `"replace_all"`
 
 Moving:
@@ -1593,7 +1596,7 @@ Keys:
 
 ___
 
-#### **Validate user cell edits**
+#### **Bind and validate user cell edits**
 
 With these functions you can validate or modify most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
 
@@ -3942,7 +3945,7 @@ tksheet has various built-in sorting keys and functions which can handle most py
 
 Note that the readonly functions can be used to disallow sorting of particular cell's/row's/column's values.
 
-There are three built-in sorting keys to choose from but you can always create your own and use that instead. See [here](#setting-the-default-sorting-key) for more information on how to set the default sorting key.
+There are three built-in sorting keys to choose from but you can always create your own and use that instead. This would enable a custom sorting order of object types. See [here](#setting-the-default-sorting-key) for more information on how to set the default sorting key.
 
 #### **natural_sort_key**
 

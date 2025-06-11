@@ -303,9 +303,9 @@
 <li><a href="#table-functionality-and-bindings">Table Functionality and Bindings</a><ul>
 <li><a href="#enable-table-functionality-and-bindings">Enable table functionality and bindings</a></li>
 <li><a href="#disable-table-functionality-and-bindings">Disable table functionality and bindings</a></li>
-<li><a href="#bind-specific-table-functionality">Bind specific table functionality</a></li>
+<li><a href="#bind-specific-table-functionality-like-cell-edits">Bind specific table functionality like cell edits</a></li>
 <li><a href="#event-data">Event Data</a></li>
-<li><a href="#validate-user-cell-edits">Validate user cell edits</a></li>
+<li><a href="#bind-and-validate-user-cell-edits">Bind and validate user cell edits</a></li>
 <li><a href="#add-commands-to-the-in-built-right-click-popup-menu">Add commands to the in-built right click popup menu</a></li>
 <li><a href="#remove-commands-added-using-popup_menu_add_command-from-the-in-built-right-click-popup-menu">Remove commands added using popup_menu_add_command from the in-built right click popup menu</a></li>
 <li><a href="#enable-or-disable-mousewheel-left-click-etc">Enable or disable mousewheel, left click etc</a></li>
@@ -676,11 +676,8 @@
 <li><a href="#tksheet-goals">tksheet Goals</a></li>
 <li><a href="#dependencies">Dependencies</a></li>
 <li><a href="#license">License</a></li>
-<li><a href="#contributing-code">Contributing Code</a></li>
-<li><a href="#asking-questions">Asking Questions</a></li>
 <li><a href="#issues">Issues</a></li>
-<li><a href="#enhancements-or-suggestions">Enhancements or Suggestions</a></li>
-<li><a href="#contributors-and-special-thanks">Contributors and Special Thanks</a></li>
+<li><a href="#contributions-and-special-thanks">Contributions and Special Thanks</a></li>
 </ul>
 </li>
 </ul>
@@ -807,7 +804,7 @@ class demo(tk.Tk):
         # AND bind all sheet modification events to a function
         # chained as two functions
         # more information at:
-        # #validate-user-cell-edits
+        # #bind-and-validate-user-cell-edits
         self.sheet.edit_validation(self.validate_edits).bind(&quot;&lt;&lt;SheetModified&gt;&gt;&quot;, self.sheet_modified)
 
         # add some new commands to the in-built right click menu
@@ -1927,11 +1924,11 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li>Uses the same arguments as <code>enable_bindings()</code>.</li>
 </ul>
 <hr />
-<h4 id="bind-specific-table-functionality"><strong>Bind specific table functionality</strong></h4>
+<h4 id="bind-specific-table-functionality-like-cell-edits"><strong>Bind specific table functionality like cell edits</strong></h4>
 <p>This function allows you to bind <strong>very</strong> specific table functionality to your own functions:</p>
 <ul>
 <li>If you want less specificity in event names you can also bind all sheet modifying events to a single function, <a href="#tkinter-and-tksheet-events">see here</a>.</li>
-<li>If you want to validate/modify user cell edits <a href="#validate-user-cell-edits">see here</a>.</li>
+<li>If you want to validate/modify user cell edits <a href="#bind-and-validate-user-cell-edits">see here</a>.</li>
 </ul>
 <pre><code class="language-python">extra_bindings(
     bindings: str | list | tuple,
@@ -1963,7 +1960,16 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li><code>"begin_undo", "begin_ctrl_z"</code></li>
 <li><code>"ctrl_z", "end_undo", "end_ctrl_z", "undo"</code></li>
 </ul>
-<p>Editing:</p>
+<p>Editing Individual Cells:</p>
+<ul>
+<li><code>"begin_edit_cell", "begin_edit_table"</code></li>
+<li><code>"end_edit_cell", "edit_cell", "edit_table"</code></li>
+<li><code>"begin_edit_header"</code></li>
+<li><code>"end_edit_header", "edit_header"</code></li>
+<li><code>"begin_edit_index"</code></li>
+<li><code>"end_edit_index", "edit_index"</code></li>
+</ul>
+<p>Editing or Copying Multiple Cells:</p>
 <ul>
 <li><code>"begin_copy", "begin_ctrl_c"</code></li>
 <li><code>"ctrl_c", "end_copy", "end_ctrl_c", "copy"</code></li>
@@ -1973,12 +1979,6 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li><code>"ctrl_v", "end_paste", "end_ctrl_v", "paste"</code></li>
 <li><code>"begin_delete_key", "begin_delete"</code></li>
 <li><code>"delete_key", "end_delete", "end_delete_key", "delete"</code></li>
-<li><code>"begin_edit_cell", "begin_edit_table"</code></li>
-<li><code>"end_edit_cell", "edit_cell", "edit_table"</code></li>
-<li><code>"begin_edit_header"</code></li>
-<li><code>"end_edit_header", "edit_header"</code></li>
-<li><code>"begin_edit_index"</code></li>
-<li><code>"end_edit_index", "edit_index"</code></li>
 <li><code>"replace_all"</code></li>
 </ul>
 <p>Moving:</p>
@@ -2286,7 +2286,7 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li>Key <strong><code>["widget"]</code></strong> will contain the widget which emitted the event, either the <code>MainTable()</code>, <code>ColumnHeaders()</code> or <code>RowIndex()</code> which are all <code>tk.Canvas</code> widgets.</li>
 </ul>
 <hr />
-<h4 id="validate-user-cell-edits"><strong>Validate user cell edits</strong></h4>
+<h4 id="bind-and-validate-user-cell-edits"><strong>Bind and validate user cell edits</strong></h4>
 <p>With these functions you can validate or modify most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.</p>
 <p><strong>Edit validation</strong></p>
 <p>This function will be called for every cell edit in an action.</p>
@@ -4338,7 +4338,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <h1 id="sorting-the-table"><strong>Sorting the Table</strong></h1>
 <p>tksheet has various built-in sorting keys and functions which can handle most python objects. Rows can be sorted by a particular column, columns can be sorted by a particular row and a selection of cell's values can be sorted row/column wise.</p>
 <p>Note that the readonly functions can be used to disallow sorting of particular cell's/row's/column's values.</p>
-<p>There are three built-in sorting keys to choose from but you can always create your own and use that instead. See <a href="#setting-the-default-sorting-key">here</a> for more information on how to set the default sorting key.</p>
+<p>There are three built-in sorting keys to choose from but you can always create your own and use that instead. This would enable a custom sorting order of object types. See <a href="#setting-the-default-sorting-key">here</a> for more information on how to set the default sorting key.</p>
 <h4 id="natural_sort_key"><strong>natural_sort_key</strong></h4>
 <p>This is the <strong>default</strong> sorting key for natural sorting of various Python types:</p>
 <ul>
@@ -8015,23 +8015,6 @@ app.mainloop()
 <h3 id="license"><strong>License</strong></h3>
 <p>tksheet is released under the MIT License. You can find the full text of the license <a href="https://github.com/ragardner/tksheet/blob/master/LICENSE.txt">here</a>.</p>
 <p>By contributing to the tksheet project, you agree to license your contributions under the same MIT License. Please make sure to read and understand the terms and conditions of the license before contributing.</p>
-<h3 id="contributing-code"><strong>Contributing Code</strong></h3>
-<p>To contribute, please follow these steps:</p>
-<ol>
-<li>Fork the tksheet repository.</li>
-<li>If you are working on a new feature, create a new branch for your contribution. Use a descriptive name for the branch that reflects the feature you're working on.</li>
-<li>Make your changes in your local branch, following the code style and conventions established in the project.</li>
-<li>Test your changes thoroughly to ensure they do not introduce any new bugs or issues.</li>
-<li>Submit a pull request to the <code>main</code> branch of the tksheet repository, including a clear title and detailed description of your changes. Pull requests ideally should include a small but comprehensive demonstration of the feature you are adding.</li>
-<li>Don't forget to update the documentation!</li>
-</ol>
-<p><strong><em>Note:</em></strong> If you're submitting a bugfix, it's generally preferred to submit it directly to the relevant branch, rather than creating a separate branch.</p>
-<h3 id="asking-questions"><strong>Asking Questions</strong></h3>
-<p>Got a question that hasn't been answered in the closed issues or is missing from the documentation? please follow these guidelines:</p>
-<ul>
-<li>Submit your question as an issue in the <a href="https://github.com/ragardner/tksheet/issues">Issues tab</a>.</li>
-<li>Provide a clear and concise description of your question, including any relevant details or examples that can help us understand your query better.</li>
-</ul>
 <h3 id="issues"><strong>Issues</strong></h3>
 <p>Please use the <a href="https://github.com/ragardner/tksheet/issues">Issues tab</a> to report any issues or ask for assistance.</p>
 <p>When submitting an issue, please follow these guidelines:</p>
@@ -8041,14 +8024,14 @@ app.mainloop()
 <li>If asking a question or seeking help, provide a clear and concise description of your question or issue, including any relevant details or examples that can help people understand your query better.</li>
 <li>Include any relevant screenshots or gifs that can visually illustrate the issue or your question.</li>
 </ul>
-<h3 id="enhancements-or-suggestions"><strong>Enhancements or Suggestions</strong></h3>
-<p>If you have an idea for a new feature, improvement or change, please follow these guidelines:</p>
+<h3 id="contributions-and-special-thanks"><strong>Contributions and Special Thanks</strong></h3>
+<p>With apologies, development of this library has ceased except for:</p>
 <ul>
-<li>Submit your suggestion as an issue in the <a href="https://github.com/ragardner/tksheet/issues">Issues tab</a>.</li>
-<li>Include a clear and concise description of your idea, including any relevant details, screenshots, or mock-ups that can help contributors understand your suggestion better.</li>
-<li>You're also welcome to become a contributor yourself and help implement your idea!</li>
+<li>Bug fixes.</li>
+<li>Behavioral issues.</li>
+<li>Documentation.</li>
 </ul>
-<h3 id="contributors-and-special-thanks"><strong>Contributors and Special Thanks</strong></h3>
+<p>Pull requests for anything else are unlikely to be merged.</p>
 <p>A special thank you to:</p>
 <ul>
 <li>@CalJaDav for the very helpful ideas/pull requests, guidance in implementing them and helping me become a better developer.</li>
