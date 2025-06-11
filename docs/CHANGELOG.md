@@ -1,5 +1,14 @@
 ### Version 7.5.12
-####
+#### Fixed:
+- `selection_add()` was incorrectly using a `list` and not a `set`.
+
+#### Improved:
+- Refactoring to improve performance of the following functions:
+    - tree_set_open()
+    - tree_open()
+    - internal function _tree_open()
+    - display_item()
+    - scroll_to_item()
 
 ### Version 7.5.11
 #### Changed:
