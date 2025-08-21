@@ -1,3 +1,7 @@
+### Version 7.5.13
+#### Documentation:
+- Fix readme downloads badge.
+
 ### Version 7.5.12
 #### Fixed:
 - `selection_add()` was incorrectly using a `list` and not a `set`.
