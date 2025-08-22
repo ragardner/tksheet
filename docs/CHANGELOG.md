@@ -1,6 +1,13 @@
 ### Version 7.5.13
+#### Added:
+- The standard copy operation uses a CSV writer, which adds quote characters and escape characters when appropriate. Added a new alternate copy option for plain text copying [#311](https://github.com/ragardner/tksheet/issues/311).
+- If copy is enabled, the key binding `platform control key` + `platform alt key` + `C`/`c` is now bound to perform a plain text copy.
+
+#### Changed:
+- The cell text editor's new line bindings no longer bind both `Alt` and `Option` on macOS and now only bind the appropriate modifier. Other similarly affected bindings have been changed in the same way.
+
 #### Documentation:
-- Fix readme downloads badge.
+- Fixed readme downloads badge.
 
 ### Version 7.5.12
 #### Fixed:

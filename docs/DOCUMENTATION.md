@@ -796,6 +796,16 @@ Key word arguments available for `set_options()` (values are defaults):
 "copy_contents_accelerator": "Ctrl+C",
 "copy_contents_image": tk.PhotoImage(data=ICON_COPY),
 "copy_contents_compound": "left",
+# copy plain
+"copy_plain_label": "Copy text",
+"copy_plain_accelerator": "Ctrl+Alt+C",
+"copy_plain_image": tk.PhotoImage(data=ICON_COPY),
+"copy_plain_compound": "left",
+# copy contents plain
+"copy_contents_plain_label": "Copy text contents",
+"copy_contents_plain_accelerator": "Ctrl+Alt+C",
+"copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
+"copy_contents_plain_compound": "left",
 # paste
 "paste_label": "Paste",
 "paste_accelerator": "Ctrl+V",
@@ -1899,6 +1909,16 @@ You can change the labels for tksheets in-built right click popup menu by using 
 "copy_contents_accelerator": "Ctrl+C",
 "copy_contents_image": tk.PhotoImage(data=ICON_COPY),
 "copy_contents_compound": "left",
+# copy plain
+"copy_plain_label": "Copy text",
+"copy_plain_accelerator": "Ctrl+Alt+C",
+"copy_plain_image": tk.PhotoImage(data=ICON_COPY),
+"copy_plain_compound": "left",
+# copy contents plain
+"copy_contents_plain_label": "Copy text contents",
+"copy_contents_plain_accelerator": "Ctrl+Alt+C",
+"copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
+"copy_contents_plain_compound": "left",
 # paste
 "paste_label": "Paste",
 "paste_accelerator": "Ctrl+V",

@@ -48,6 +48,15 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, r: int, c: int) -> None:
             compound=MT.PAR.ops.copy_compound,
             **mnkwgs,
         )
+        menu_add_command(
+            popup_menu,
+            label=MT.PAR.ops.copy_plain_label,
+            accelerator=MT.PAR.ops.copy_plain_accelerator,
+            command=MT.ctrl_c_plain,
+            image=MT.PAR.ops.copy_plain_image,
+            compound=MT.PAR.ops.copy_plain_compound,
+            **mnkwgs,
+        )
     if MT.paste_enabled and any(
         x in MT.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit")
     ):
@@ -167,6 +176,15 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, r: int) -> None:
             command=MT.ctrl_c,
             image=MT.PAR.ops.copy_contents_image,
             compound=MT.PAR.ops.copy_contents_compound,
+            **mnkwgs,
+        )
+        menu_add_command(
+            popup_menu,
+            label=MT.PAR.ops.copy_contents_plain_label,
+            accelerator=MT.PAR.ops.copy_contents_plain_accelerator,
+            command=MT.ctrl_c_plain,
+            image=MT.PAR.ops.copy_contents_plain_image,
+            compound=MT.PAR.ops.copy_contents_plain_compound,
             **mnkwgs,
         )
     if MT.paste_enabled and any(
@@ -315,6 +333,15 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, c: int) -> None:
             command=MT.ctrl_c,
             image=MT.PAR.ops.copy_contents_image,
             compound=MT.PAR.ops.copy_contents_compound,
+            **mnkwgs,
+        )
+        menu_add_command(
+            popup_menu,
+            label=MT.PAR.ops.copy_contents_plain_label,
+            accelerator=MT.PAR.ops.copy_contents_plain_accelerator,
+            command=MT.ctrl_c_plain,
+            image=MT.PAR.ops.copy_contents_plain_image,
+            compound=MT.PAR.ops.copy_contents_plain_compound,
             **mnkwgs,
         )
     if MT.paste_enabled and any(

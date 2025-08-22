@@ -16,6 +16,7 @@ from .constants import (  # noqa: F401
     ICON_SORT_DESC,
     ICON_UNDO,
     USER_OS,
+    alt_key,
     ctrl_key,
 )
 from .other_classes import DotDict, FontTuple
@@ -82,6 +83,16 @@ def new_sheet_options() -> DotDict:
             "copy_contents_accelerator": "Ctrl+C",
             "copy_contents_image": tk.PhotoImage(data=ICON_COPY),
             "copy_contents_compound": "left",
+            # copy plain
+            "copy_plain_label": "Copy text",
+            "copy_plain_accelerator": "Ctrl+Alt+C",
+            "copy_plain_image": tk.PhotoImage(data=ICON_COPY),
+            "copy_plain_compound": "left",
+            # copy contents plain
+            "copy_contents_plain_label": "Copy text contents",
+            "copy_contents_plain_accelerator": "Ctrl+Alt+C",
+            "copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
+            "copy_contents_plain_compound": "left",
             # paste
             "paste_label": "Paste",
             "paste_accelerator": "Ctrl+V",
@@ -213,6 +224,10 @@ def new_sheet_options() -> DotDict:
             "copy_bindings": [
                 f"<{ctrl_key}-c>",
                 f"<{ctrl_key}-C>",
+            ],
+            "copy_plain_bindings": [
+                f"<{ctrl_key}-{alt_key}-c>",
+                f"<{ctrl_key}-{alt_key}-C>",
             ],
             "cut_bindings": [
                 f"<{ctrl_key}-x>",

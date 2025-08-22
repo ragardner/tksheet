@@ -1065,6 +1065,52 @@ class MainTable(tk.Canvas):
         self.PAR.emit_event("<<Copy>>", EventDataDict({**event_data, **{"eventname": "copy"}}))
         return event_data
 
+    def ctrl_c_plain(self, event=None) -> None | EventDataDict:
+        if not self.selected:
+            return
+        event_data = self.new_event_dict("begin_ctrl_c")
+        boxes, maxrows = self.get_ctrl_x_c_boxes()
+        event_data["selection_boxes"] = boxes
+        s = io.StringIO()
+        delim, line_term = self.PAR.ops.to_clipboard_delimiter, self.PAR.ops.to_clipboard_lineterminator
+        if not try_binding(self.extra_begin_ctrl_c_func, event_data):
+            return
+        if self.selected.type_ in ("cells", "columns"):
+            for rn in range(maxrows):
+                row = []
+                for r1, c1, _, c2 in boxes:
+                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    for c in range(c1, c2):
+                        datacn = self.datacn(c)
+                        v = self.get_cell_clipboard(datarn, datacn)
+                        event_data["cells"]["table"][(datarn, datacn)] = v
+                        row.append(v)
+                s.write(delim.join(row) + line_term)
+        else:
+            for r1, c1, r2, c2 in boxes:
+                for rn in range(r2 - r1):
+                    row = []
+                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    for c in range(c1, c2):
+                        datacn = self.datacn(c)
+                        v = self.get_cell_clipboard(datarn, datacn)
+                        event_data["cells"]["table"][(datarn, datacn)] = v
+                        row.append(v)
+                    s.write(delim.join(row) + line_term)
+        for r1, c1, r2, c2 in boxes:
+            self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
+        self.clipboard_clear()
+        if len(event_data["cells"]["table"]) == 1 and self.PAR.ops.to_clipboard_lineterminator not in next(
+            iter(event_data["cells"]["table"].values())
+        ):
+            self.clipboard_append(next(iter(event_data["cells"]["table"].values())))
+        else:
+            self.clipboard_append(s.getvalue())
+        self.update_idletasks()
+        try_binding(self.extra_end_ctrl_c_func, event_data, new_name="end_ctrl_c")
+        self.PAR.emit_event("<<Copy>>", EventDataDict({**event_data, **{"eventname": "copy"}}))
+        return event_data
+
     def ctrl_x(self, event=None, validation: bool = True) -> None | EventDataDict:
         if not self.selected:
             return
@@ -3092,6 +3138,7 @@ class MainTable(tk.Canvas):
         if binding in ("all", "copy", "edit_bindings", "edit"):
             self.copy_enabled = True
             self._tksheet_bind("copy_bindings", self.ctrl_c)
+            self._tksheet_bind("copy_plain_bindings", self.ctrl_c_plain)
         if binding in ("all", "cut", "edit_bindings", "edit"):
             self.cut_enabled = True
             self._tksheet_bind("cut_bindings", self.ctrl_x)
@@ -3251,6 +3298,7 @@ class MainTable(tk.Canvas):
         if binding in ("all", "copy", "edit_bindings", "edit"):
             self.copy_enabled = False
             self._tksheet_unbind("copy_bindings")
+            self._tksheet_unbind("copy_plain_bindings")
         if binding in ("all", "cut", "edit_bindings", "edit"):
             self.cut_enabled = False
             self._tksheet_unbind("cut_bindings")

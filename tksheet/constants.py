@@ -5,6 +5,7 @@ from typing import Hashable
 
 USER_OS: str = f"{get_os()}".lower()
 ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
+alt_key: str = "Option" if USER_OS == "darwin" else "Alt"
 rc_binding: str = "<2>" if USER_OS == "darwin" else "<3>"
 symbols_set: set[str] = set("""!#$%&'()*+,-./:;"@[]^_`{|}~>?= \\""")
 nonelike: set[Hashable] = {None, "none", ""}
@@ -54,13 +55,11 @@ backwards_compatibility_keys: dict[str, str] = {
 }
 
 text_editor_newline_bindings: set[str] = {
-    "<Alt-Return>",
-    "<Alt-KP_Enter>",
+    f"<{alt_key}-Return>",
+    f"<{alt_key}-KP_Enter>",
     "<Shift-Return>",
     f"<{ctrl_key}-Return>",
 }
-if USER_OS == "darwin":
-    text_editor_newline_bindings.add("<Option-Return>")
 
 text_editor_close_bindings: dict[str, str] = {
     "<Tab>": "Tab",

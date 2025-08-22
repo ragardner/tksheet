@@ -5,7 +5,7 @@ import tkinter as tk
 from collections.abc import Callable
 from typing import Any, Literal
 
-from .constants import ctrl_key, rc_binding
+from .constants import alt_key, ctrl_key, rc_binding
 from .functions import recursive_bind
 from .other_classes import DotDict, FontTuple
 
@@ -265,9 +265,8 @@ class FindWindow(tk.Frame):
         self.fg = None
         self.pressed_label = None
 
-        for b in ("Option", "Alt"):
-            for c in ("l", "L"):
-                recursive_bind(self, f"<{b}-{c}>", self.toggle_in_selection)
+        for c in ("l", "L"):
+            recursive_bind(self, f"<{alt_key}-{c}>", self.toggle_in_selection)
 
         action_labels = [
             (self.toggle_replace, "Toggle Replace"),
