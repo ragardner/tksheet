@@ -52,6 +52,7 @@ from .functions import (
     consecutive_ranges,
     data_to_displayed_idxs,
     diff_gen,
+    estimate_max_visible_cells,
     event_dict,
     event_has_char_key,
     event_opens_dropdown_or_checkbox,
@@ -189,7 +190,7 @@ class MainTable(tk.Canvas):
         self.hidd_checkbox = {}
         self.hidd_corners = set()
 
-        self.selection_boxes = {}
+        self.selection_boxes: dict[int, SelectionBox] = {}
         self.selected = ()
         self.named_spans = {}
         self.reset_tags()
@@ -3369,6 +3370,30 @@ class MainTable(tk.Canvas):
             or (datacn in self.col_options and "readonly" in self.col_options[datacn])
         )
 
+    def estimate_selections_readonly(self) -> bool:
+        max_cells = estimate_max_visible_cells(self)
+        total_cells = 0
+        for box in self.selection_boxes.values():
+            r1, c1, r2, c2 = box.coords
+            total_cells += (r2 - r1) * (c2 - c1)
+
+        if total_cells > max_cells:
+            return False
+
+        for box in self.selection_boxes.values():
+            r1, c1, r2, c2 = box.coords
+            for r in range(r1, r2):
+                for c in range(c1, c2):
+                    datarn, datacn = self.datarn(r), self.datacn(c)
+                    is_readonly = (
+                        ((datarn, datacn) in self.cell_options and "readonly" in self.cell_options[(datarn, datacn)])
+                        or (datarn in self.row_options and "readonly" in self.row_options[datarn])
+                        or (datacn in self.col_options and "readonly" in self.col_options[datacn])
+                    )
+                    if not is_readonly:
+                        return False
+        return True
+
     def rc(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
@@ -3380,15 +3405,15 @@ class MainTable(tk.Canvas):
                 if self.col_selected(c):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.CH.ch_rc_popup_menu
-                        build_header_rc_menu(self, popup_menu, c)
+                        build_header_rc_menu(self, popup_menu, self.selected)
                 elif self.row_selected(r):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.RI.ri_rc_popup_menu
-                        build_index_rc_menu(self, popup_menu, r)
+                        build_index_rc_menu(self, popup_menu, self.selected)
                 elif self.cell_selected(r, c):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
-                        build_table_rc_menu(self, popup_menu, r, c)
+                        build_table_rc_menu(self, popup_menu, self.selected)
                 else:
                     if self.rc_select_enabled:
                         if self.single_selection_enabled:
@@ -3397,7 +3422,7 @@ class MainTable(tk.Canvas):
                             self.toggle_select_cell(r, c, redraw=True)
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
-                        build_table_rc_menu(self, popup_menu, r, c)
+                        build_table_rc_menu(self, popup_menu, self.selected)
             else:
                 self.deselect("all")
                 if self.rc_popup_menus_enabled:
@@ -4993,8 +5018,12 @@ class MainTable(tk.Canvas):
                         data_ins_col = int(self.displayed_columns[-1])
         else:
             numcols = 1
-            displayed_ins_col = len(self.col_positions) - 1
-            data_ins_col = self.total_data_cols()
+            if event == "left":
+                displayed_ins_col = 0
+                data_ins_col = 0
+            else:
+                displayed_ins_col = len(self.col_positions) - 1
+                data_ins_col = self.total_data_cols()
         if (
             isinstance(self.PAR.ops.paste_insert_column_limit, int)
             and self.PAR.ops.paste_insert_column_limit < displayed_ins_col + numcols
@@ -5129,8 +5158,12 @@ class MainTable(tk.Canvas):
                         data_ins_row = int(self.displayed_rows[-1])
         else:
             numrows = 1
-            displayed_ins_row = len(self.row_positions) - 1
-            data_ins_row = self.total_data_rows()
+            if event == "above":
+                displayed_ins_row = 0
+                data_ins_row = 0
+            else:
+                displayed_ins_row = len(self.row_positions) - 1
+                data_ins_row = self.total_data_rows()
         if (
             isinstance(self.PAR.ops.paste_insert_row_limit, int)
             and self.PAR.ops.paste_insert_row_limit < displayed_ins_row + numrows

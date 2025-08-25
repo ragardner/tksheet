@@ -204,7 +204,7 @@ class ColumnHeaders(tk.Canvas):
                 if self.MT.col_selected(c):
                     if self.MT.rc_popup_menus_enabled:
                         popup_menu = self.ch_rc_popup_menu
-                        build_header_rc_menu(self.MT, popup_menu, c)
+                        build_header_rc_menu(self.MT, popup_menu, self.MT.selected)
                 else:
                     if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_col(c, redraw=True)
@@ -212,7 +212,7 @@ class ColumnHeaders(tk.Canvas):
                         self.toggle_select_col(c, redraw=True)
                     if self.MT.rc_popup_menus_enabled:
                         popup_menu = self.ch_rc_popup_menu
-                        build_header_rc_menu(self.MT, popup_menu, c)
+                        build_header_rc_menu(self.MT, popup_menu, self.MT.selected)
         try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             self.popup_menu_loc = c

@@ -200,7 +200,7 @@ class RowIndex(tk.Canvas):
                 if self.MT.row_selected(r):
                     if self.MT.rc_popup_menus_enabled:
                         popup_menu = self.ri_rc_popup_menu
-                        build_index_rc_menu(self.MT, popup_menu, r)
+                        build_index_rc_menu(self.MT, popup_menu, self.MT.selected)
                 else:
                     if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_row(r, redraw=True)
@@ -208,7 +208,7 @@ class RowIndex(tk.Canvas):
                         self.toggle_select_row(r, redraw=True)
                     if self.MT.rc_popup_menus_enabled:
                         popup_menu = self.ri_rc_popup_menu
-                        build_index_rc_menu(self.MT, popup_menu, r)
+                        build_index_rc_menu(self.MT, popup_menu, self.MT.selected)
         try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             self.popup_menu_loc = r

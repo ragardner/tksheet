@@ -1,4 +1,7 @@
 ### Version 7.5.13
+#### Fixed:
+- Built-in right click popup menu command filtering minor fixes and improvements. [#292](https://github.com/ragardner/tksheet/issues/292)
+
 #### Added:
 - The standard copy operation uses a CSV writer, which adds quote characters and escape characters when appropriate. Added a new alternate copy option for plain text copying [#311](https://github.com/ragardner/tksheet/issues/311).
 - If copy is enabled, the key binding `platform control key` + `platform alt key` + `C`/`c` is now bound to perform a plain text copy.
