@@ -1,6 +1,9 @@
 ### Version 7.5.13
 #### Fixed:
-- Built-in right click popup menu command filtering minor fixes and improvements. [#292](https://github.com/ragardner/tksheet/issues/292)
+- Built-in right click popup menu command filtering minor fixes and improvements [#292](https://github.com/ragardner/tksheet/issues/292).
+
+#### Addressed:
+- MacOS right click working with python code but not bundled/compiled app [#2](https://github.com/ragardner/tksheet/issues/2).
 
 #### Added:
 - The standard copy operation uses a CSV writer, which adds quote characters and escape characters when appropriate. Added a new alternate copy option for plain text copying [#311](https://github.com/ragardner/tksheet/issues/311).
@@ -8,6 +11,7 @@
 
 #### Changed:
 - The cell text editor's new line bindings no longer bind both `Alt` and `Option` on macOS and now only bind the appropriate modifier. Other similarly affected bindings have been changed in the same way.
+- `rc_binding` no longer importable from the `tksheet` library. Use `Sheet.ops.rc_binding` once the `Sheet()` is initialized.
 
 #### Documentation:
 - Fixed readme downloads badge.
