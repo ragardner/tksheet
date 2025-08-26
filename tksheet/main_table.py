@@ -3385,12 +3385,11 @@ class MainTable(tk.Canvas):
             for r in range(r1, r2):
                 for c in range(c1, c2):
                     datarn, datacn = self.datarn(r), self.datacn(c)
-                    is_readonly = (
+                    if not (
                         ((datarn, datacn) in self.cell_options and "readonly" in self.cell_options[(datarn, datacn)])
                         or (datarn in self.row_options and "readonly" in self.row_options[datarn])
                         or (datacn in self.col_options and "readonly" in self.col_options[datacn])
-                    )
-                    if not is_readonly:
+                    ):
                         return False
         return True
 

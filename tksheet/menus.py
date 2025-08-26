@@ -19,7 +19,7 @@ def menu_add_command(menu: tk.Menu, **kwargs) -> None:
 def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     popup_menu.delete(0, "end")
     mnkwgs = get_menu_kwargs(MT.PAR.ops)
-    if MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_cells_enabled:
+    if selected and (MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_cells_enabled):
         selections_readonly = MT.estimate_selections_readonly()
     else:
         selections_readonly = False
@@ -36,6 +36,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             )
     if (
         MT.cut_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "cut", "edit_bindings", "edit"))
     ):
@@ -73,9 +74,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.paste_enabled
-        and (
-            not selections_readonly or not selected or (MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
-        )
+        and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit"))
     ):
         menu_add_command(
@@ -89,6 +88,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.delete_key_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "delete", "edit_bindings", "edit"))
     ):
@@ -101,7 +101,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.delete_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_cells_enabled and not selections_readonly:
+    if MT.rc_sort_cells_enabled and selected and not selections_readonly:
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_cells_label,
@@ -168,7 +168,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
 def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     popup_menu.delete(0, "end")
     mnkwgs = get_menu_kwargs(MT.PAR.ops)
-    if MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_row_enabled:
+    if selected and (MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_row_enabled):
         selections_readonly = MT.estimate_selections_readonly()
     else:
         selections_readonly = False
@@ -185,6 +185,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             )
     if (
         MT.cut_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "cut", "edit_bindings", "edit"))
     ):
@@ -222,9 +223,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.paste_enabled
-        and (
-            not selections_readonly or not selected or (MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
-        )
+        and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit"))
     ):
         menu_add_command(
@@ -238,6 +237,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.delete_key_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "delete", "edit_bindings", "edit"))
     ):
@@ -276,7 +276,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.insert_rows_below_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_row_enabled and not selections_readonly:
+    if MT.rc_sort_row_enabled and selected and not selections_readonly:
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_row_label,
@@ -344,7 +344,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
 def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     popup_menu.delete(0, "end")
     mnkwgs = get_menu_kwargs(MT.PAR.ops)
-    if MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_column_enabled:
+    if selected and (MT.cut_enabled or MT.paste_enabled or MT.delete_key_enabled or MT.rc_sort_column_enabled):
         selections_readonly = MT.estimate_selections_readonly()
     else:
         selections_readonly = False
@@ -361,6 +361,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             )
     if (
         MT.cut_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "cut", "edit_bindings", "edit"))
     ):
@@ -398,9 +399,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.paste_enabled
-        and (
-            not selections_readonly or not selected or (MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
-        )
+        and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit"))
     ):
         menu_add_command(
@@ -414,6 +413,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
         )
     if (
         MT.delete_key_enabled
+        and selected
         and not selections_readonly
         and any(x in MT.enabled_bindings_menu_entries for x in ("all", "delete", "edit_bindings", "edit"))
     ):
@@ -452,7 +452,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.insert_columns_right_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_column_enabled and not selections_readonly:
+    if MT.rc_sort_column_enabled and selected and not selections_readonly:
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_column_label,
