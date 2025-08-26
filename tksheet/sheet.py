@@ -326,6 +326,7 @@ class Sheet(tk.Frame):
             self.ops["rc_binding"] = rc_binding
         else:
             self.ops["rc_binding"] = get_rc_binding(self)
+            rc_binding = self.ops["rc_binding"]
         if column_width is not None:
             default_column_width = column_width
         if header_height is not None:

@@ -204,9 +204,9 @@ def estimate_max_visible_cells(table: tk.Canvas) -> int:
 def get_rc_binding(widget: tk.Misc) -> str:
     os_name = get_os().lower()
     if os_name != "darwin":
-        return "<Button-3>"
-    window_system = widget.tk.call("tk", "windowingsystem")
-    return "<Button-2>" if window_system == "aqua" else "<Button-3>"
+        return "<3>"
+    window_system = widget.tk.call("tk", "windowingsystem").lower()
+    return "<2>" if window_system == "aqua" else "<3>"
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
