@@ -4,7 +4,7 @@ import tkinter as tk
 from collections.abc import Callable
 from typing import Any, Literal
 
-from .constants import align_helper, ctrl_key, rc_binding
+from .constants import align_helper, ctrl_key
 from .functions import convert_align
 from .other_classes import DotDict, FontTuple
 
@@ -14,6 +14,7 @@ class TextEditorTkText(tk.Text):
         self,
         parent: tk.Misc,
         newline_binding: None | Callable = None,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -194,6 +195,7 @@ class TextEditor(tk.Frame):
         self,
         parent: tk.Misc,
         newline_binding: None | Callable = None,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -207,7 +209,7 @@ class TextEditor(tk.Frame):
         self.parent = parent
         self.r = 0
         self.c = 0
-        self.tktext = TextEditorTkText(self, newline_binding=newline_binding)
+        self.tktext = TextEditorTkText(self, newline_binding=newline_binding, rc_binding=rc_binding)
         self.tktext.grid(row=0, column=0, sticky="nswe")
 
     def get(self) -> str:

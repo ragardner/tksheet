@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Literal
 
-from .constants import ctrl_key, rc_binding
+from .constants import ctrl_key
 
 
 class TooltipTkText(tk.Text):
@@ -13,6 +13,7 @@ class TooltipTkText(tk.Text):
     def __init__(
         self,
         parent: tk.Misc,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -174,6 +175,7 @@ class Tooltip(tk.Toplevel):
         select_bg: str,
         select_fg: str,
         scrollbar_style: str,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(parent)
         self.withdraw()  # Hide until positioned
@@ -201,7 +203,7 @@ class Tooltip(tk.Toplevel):
 
         # Content frame as child of border_frame
         self.content_frame = ttk.Frame(self.border_frame)
-        self.content_text = TooltipTkText(self.content_frame)
+        self.content_text = TooltipTkText(self.content_frame, rc_binding=rc_binding)
         self.content_scrollbar = ttk.Scrollbar(self.content_frame, orient="vertical", style=scrollbar_style)
         self.content_scrollbar.pack(side="right", fill="y")
         self.content_text.pack(side="left", fill="both", expand=True)
@@ -210,7 +212,7 @@ class Tooltip(tk.Toplevel):
 
         # Note frame as child of border_frame
         self.note_frame = ttk.Frame(self.border_frame)
-        self.note_text = TooltipTkText(self.note_frame)
+        self.note_text = TooltipTkText(self.note_frame, rc_binding=rc_binding)
         self.note_scrollbar = ttk.Scrollbar(self.note_frame, orient="vertical", style=scrollbar_style)
         self.note_scrollbar.pack(side="right", fill="y")
         self.note_text.pack(side="left", fill="both", expand=True)

@@ -12,7 +12,6 @@ from typing import Any, Literal
 from .colors import color_map
 from .constants import (
     _test_str,
-    rc_binding,
     text_editor_close_bindings,
     text_editor_newline_bindings,
     text_editor_to_unbind,
@@ -71,6 +70,7 @@ class RowIndex(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.ops),
                 **get_bg_fg(self.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
+                "rc_binding": self.ops.rc_binding,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -161,14 +161,14 @@ class RowIndex(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(rc_binding, self.rc)
+            self.bind(self.ops.rc_binding, self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(rc_binding)
+            self.unbind(self.ops.rc_binding)
 
     def set_width(self, new_width: int, set_TL: bool = False, recreate_selection_boxes: bool = True) -> None:
         try:
@@ -2169,7 +2169,9 @@ class RowIndex(tk.Canvas):
             "r": r,
         }
         if not self.text_editor.window:
-            self.text_editor.window = TextEditor(self, newline_binding=self.text_editor_newline_binding)
+            self.text_editor.window = TextEditor(
+                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.ops.rc_binding
+            )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)
         if not self.text_editor.open:

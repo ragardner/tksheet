@@ -10,6 +10,7 @@ from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from difflib import SequenceMatcher
 from itertools import chain, islice, repeat
+from platform import system as get_os
 from types import ModuleType
 from typing import Any, Literal
 
@@ -198,6 +199,14 @@ def estimate_max_visible_cells(table: tk.Canvas) -> int:
 
     # Rough max cells
     return max_rows * max_cols
+
+
+def get_rc_binding(widget: tk.Misc) -> str:
+    os_name = get_os().lower()
+    if os_name != "darwin":
+        return "<Button-3>"
+    window_system = widget.tk.call("tk", "windowingsystem")
+    return "<Button-2>" if window_system == "aqua" else "<Button-3>"
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:

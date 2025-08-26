@@ -13,7 +13,6 @@ from .colors import color_map
 from .constants import (
     USER_OS,
     _test_str,
-    rc_binding,
     text_editor_close_bindings,
     text_editor_newline_bindings,
     text_editor_to_unbind,
@@ -69,6 +68,7 @@ class ColumnHeaders(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.ops),
                 **get_bg_fg(self.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
+                "rc_binding": self.ops.rc_binding,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -153,7 +153,7 @@ class ColumnHeaders(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(rc_binding, self.rc)
+            self.bind(self.ops.rc_binding, self.rc)
             self.bind("<MouseWheel>", self.mousewheel)
             if USER_OS == "linux":
                 self.bind("<Button-4>", self.mousewheel)
@@ -164,7 +164,7 @@ class ColumnHeaders(tk.Canvas):
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(rc_binding)
+            self.unbind(self.ops.rc_binding)
             self.unbind("<MouseWheel>")
             if USER_OS == "linux":
                 self.unbind("<Button-4>")
@@ -1998,7 +1998,9 @@ class ColumnHeaders(tk.Canvas):
             "c": c,
         }
         if not self.text_editor.window:
-            self.text_editor.window = TextEditor(self, newline_binding=self.text_editor_newline_binding)
+            self.text_editor.window = TextEditor(
+                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.ops.rc_binding
+            )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)
         if not self.text_editor.open:

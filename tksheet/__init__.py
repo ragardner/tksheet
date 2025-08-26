@@ -28,7 +28,6 @@ from .constants import (
     emitted_events,
     falsy,
     nonelike,
-    rc_binding,
     symbols_set,
     truthy,
 )

@@ -3,7 +3,6 @@ from __future__ import annotations
 import tkinter as tk
 from typing import Any
 
-from .constants import rc_binding
 from .functions import try_binding
 
 
@@ -90,7 +89,7 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<B1-Motion>", self.b1_motion)
         self.bind("<ButtonRelease-1>", self.b1_release)
         self.bind("<Double-Button-1>", self.double_b1)
-        self.bind(rc_binding, self.rc)
+        self.bind(self.PAR.ops.rc_binding, self.rc)
 
     def redraw(self) -> None:
         self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
@@ -149,14 +148,14 @@ class TopLeftRectangle(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(rc_binding, self.rc)
+            self.bind(self.PAR.ops.rc_binding, self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(rc_binding)
+            self.unbind(self.PAR.ops.rc_binding)
 
     def set_dimensions(
         self,

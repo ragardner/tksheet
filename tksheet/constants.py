@@ -6,7 +6,6 @@ from typing import Hashable
 USER_OS: str = f"{get_os()}".lower()
 ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
 alt_key: str = "Option" if USER_OS == "darwin" else "Alt"
-rc_binding: str = "<2>" if USER_OS == "darwin" else "<3>"
 symbols_set: set[str] = set("""!#$%&'()*+,-./:;"@[]^_`{|}~>?= \\""")
 nonelike: set[Hashable] = {None, "none", ""}
 truthy: set[Hashable] = {True, "true", "t", "yes", "y", "on", "1"}

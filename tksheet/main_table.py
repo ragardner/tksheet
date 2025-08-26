@@ -24,7 +24,6 @@ from .constants import (
     bind_del_rows,
     ctrl_key,
     font_value_error,
-    rc_binding,
     text_editor_close_bindings,
     text_editor_newline_bindings,
     text_editor_to_unbind,
@@ -146,6 +145,7 @@ class MainTable(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.PAR.ops),
                 **get_bg_fg(self.PAR.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
+                "rc_binding": self.PAR.ops.rc_binding,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -420,7 +420,7 @@ class MainTable(tk.Canvas):
             ("<Shift-ButtonPress-1>", self, self.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.CH, self.CH.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.RI, self.RI.shift_b1_press),
-            (rc_binding, self, self.rc),
+            (self.PAR.ops.rc_binding, self, self.rc),
             (f"<{ctrl_key}-ButtonPress-1>", self, self.ctrl_b1_press),
             (f"<{ctrl_key}-ButtonPress-1>", self.CH, self.CH.ctrl_b1_press),
             (f"<{ctrl_key}-ButtonPress-1>", self.RI, self.RI.ctrl_b1_press),
@@ -626,6 +626,7 @@ class MainTable(tk.Canvas):
                 replace_all_func=self.replace_all,
                 toggle_replace_func=self.reposition_find_window,
                 drag_func=self.drag_find_window,
+                rc_binding=self.PAR.ops.rc_binding,
             )
             self.find_window.canvas_id = self.create_window((x, y), window=self.find_window.window, anchor="nw")
         else:
@@ -7471,7 +7472,9 @@ class MainTable(tk.Canvas):
             "c": c,
         }
         if not self.text_editor.window:
-            self.text_editor.window = TextEditor(self, newline_binding=self.text_editor_newline_binding)
+            self.text_editor.window = TextEditor(
+                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.PAR.ops.rc_binding
+            )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)
         if not self.text_editor.open:

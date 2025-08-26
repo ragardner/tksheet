@@ -5,7 +5,7 @@ import tkinter as tk
 from collections.abc import Callable
 from typing import Any, Literal
 
-from .constants import alt_key, ctrl_key, rc_binding
+from .constants import alt_key, ctrl_key
 from .functions import recursive_bind
 from .other_classes import DotDict, FontTuple
 
@@ -16,6 +16,7 @@ class FindWindowTkText(tk.Text):
     def __init__(
         self,
         parent: tk.Misc,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -184,6 +185,7 @@ class FindWindow(tk.Frame):
         replace_all_func: Callable,
         toggle_replace_func: Callable,
         drag_func: Callable,
+        rc_binding: str = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -215,7 +217,7 @@ class FindWindow(tk.Frame):
         self.toggle_replace.grid(row=0, column=0, sticky="ns")
         self.toggle_replace.grid_remove()
 
-        self.tktext = FindWindowTkText(self)
+        self.tktext = FindWindowTkText(self, rc_binding=rc_binding)
         self.tktext.grid(row=0, column=1, sticky="nswe")
 
         self.find_previous_arrow = tk.Label(self, text="↑", cursor="hand2", highlightthickness=1)
@@ -235,7 +237,7 @@ class FindWindow(tk.Frame):
         self.separator.grid(row=1, column=1, columnspan=3, sticky="we")
         self.separator.grid_remove()
 
-        self.replace_tktext = FindWindowTkText(self)
+        self.replace_tktext = FindWindowTkText(self, rc_binding=rc_binding)
         self.replace_tktext.grid(row=2, column=1, columnspan=4, sticky="nswe")
         self.replace_tktext.grid_remove()
 
