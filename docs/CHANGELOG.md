@@ -1,3 +1,6 @@
+### Version 7.5.14
+####
+
 ### Version 7.5.13
 #### Fixed:
 - Built-in right click popup menu command filtering minor fixes and improvements [#292](https://github.com/ragardner/tksheet/issues/292).
