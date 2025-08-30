@@ -8,11 +8,13 @@
 
 ### **Known Issues**
 
-1. When using `edit_validation()` to validate cell edits and pasting into the sheet:
+- Word wrap - Tabs and multiple spaces are rendered as a single space.
+- Mac OS has both `<2>` and `<3>` bound for right click.
+- When using `edit_validation()` to validate cell edits and pasting into the sheet:
     - If the sheets rows are expanded then the row numbers under the key `row` and `loc` are data indexes whereas the column numbers are displayed indexes.
     - If the sheets columns are expanded then the column numbers under the key `column` and `loc` are data indexes whereas the row numbers are displayed indexes.
     - This is only relevant when there are hidden rows or columns and you're using `edit_validation()` and you're using the event data keys `row`, `column` or `loc` in your bound `edit_validation()` function and you're using paste and the sheet can be expanded by paste.
-2. There may be some issues with toggle select mode and deselection.
+- There may be some issues with toggle select mode and deselection.
 
 ### **Limitations**
 
@@ -292,6 +294,7 @@ def __init__(
     all_columns_displayed: bool = True,
     displayed_rows: list[int] | None = None,
     all_rows_displayed: bool = True,
+    to_clipboard_dialect: csv.Dialect = csv.excel_tab,
     to_clipboard_delimiter: str = "\t",
     to_clipboard_quotechar: str = '"',
     to_clipboard_lineterminator: str = "\n",
@@ -781,31 +784,16 @@ Key word arguments available for `set_options()` (values are defaults):
 "cut_accelerator": "Ctrl+X",
 "cut_image": tk.PhotoImage(data=ICON_CUT),
 "cut_compound": "left",
-# cut contents
-"cut_contents_label": "Cut contents",
-"cut_contents_accelerator": "Ctrl+X",
-"cut_contents_image": tk.PhotoImage(data=ICON_CUT),
-"cut_contents_compound": "left",
 # copy
 "copy_label": "Copy",
 "copy_accelerator": "Ctrl+C",
 "copy_image": tk.PhotoImage(data=ICON_COPY),
 "copy_compound": "left",
-# copy contents
-"copy_contents_label": "Copy contents",
-"copy_contents_accelerator": "Ctrl+C",
-"copy_contents_image": tk.PhotoImage(data=ICON_COPY),
-"copy_contents_compound": "left",
 # copy plain
 "copy_plain_label": "Copy text",
-"copy_plain_accelerator": "Ctrl+Alt+C",
+"copy_plain_accelerator": "Ctrl+Insert",
 "copy_plain_image": tk.PhotoImage(data=ICON_COPY),
 "copy_plain_compound": "left",
-# copy contents plain
-"copy_contents_plain_label": "Copy text contents",
-"copy_contents_plain_accelerator": "Ctrl+Alt+C",
-"copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
-"copy_contents_plain_compound": "left",
 # paste
 "paste_label": "Paste",
 "paste_accelerator": "Ctrl+V",
@@ -934,9 +922,13 @@ Key word arguments available for `set_options()` (values are defaults):
 "redo_image": tk.PhotoImage(data=ICON_REDO),
 "redo_compound": "left",
 # bindings
+"rc_bindings": ["<2>", "<3>"] if USER_OS == "darwin" else ["<3>"],
 "copy_bindings": [
     f"<{ctrl_key}-c>",
     f"<{ctrl_key}-C>",
+],
+"copy_plain_bindings": [
+    f"<{ctrl_key}-Insert>",
 ],
 "cut_bindings": [
     f"<{ctrl_key}-x>",
@@ -1039,6 +1031,7 @@ else ["<Home>"],
 "set_cell_sizes_on_zoom": False,
 "auto_resize_columns": None,
 "auto_resize_rows": None,
+"to_clipboard_dialect": csv.excel_tab,
 "to_clipboard_delimiter": "\t",
 "to_clipboard_quotechar": '"',
 "to_clipboard_lineterminator": "\n",
@@ -1894,31 +1887,16 @@ You can change the labels for tksheets in-built right click popup menu by using 
 "cut_accelerator": "Ctrl+X",
 "cut_image": tk.PhotoImage(data=ICON_CUT),
 "cut_compound": "left",
-# cut contents
-"cut_contents_label": "Cut contents",
-"cut_contents_accelerator": "Ctrl+X",
-"cut_contents_image": tk.PhotoImage(data=ICON_CUT),
-"cut_contents_compound": "left",
 # copy
 "copy_label": "Copy",
 "copy_accelerator": "Ctrl+C",
 "copy_image": tk.PhotoImage(data=ICON_COPY),
 "copy_compound": "left",
-# copy contents
-"copy_contents_label": "Copy contents",
-"copy_contents_accelerator": "Ctrl+C",
-"copy_contents_image": tk.PhotoImage(data=ICON_COPY),
-"copy_contents_compound": "left",
 # copy plain
 "copy_plain_label": "Copy text",
-"copy_plain_accelerator": "Ctrl+Alt+C",
+"copy_plain_accelerator": "Ctrl+Insert",
 "copy_plain_image": tk.PhotoImage(data=ICON_COPY),
 "copy_plain_compound": "left",
-# copy contents plain
-"copy_contents_plain_label": "Copy text contents",
-"copy_contents_plain_accelerator": "Ctrl+Alt+C",
-"copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
-"copy_contents_plain_compound": "left",
 # paste
 "paste_label": "Paste",
 "paste_accelerator": "Ctrl+V",
@@ -2053,6 +2031,31 @@ Example:
 ```python
 # changing the copy label to the spanish for Copy
 sheet.set_options(copy_label="Copiar", copy_image=tk.PhotoImage(file="filepath_to_img.png"), copy_compound="left")
+```
+
+Notes:
+
+- To remove the `Copy plain` right click menu option when copy is enabled you can overwrite it, e.g.
+
+```python
+from tksheet import (
+    ICON_COPY,
+    Sheet,
+    ctrl_key,
+)
+
+# ...
+
+self.sheet.set_options(
+    copy_plain_label="Copy",
+    copy_plain_accelerator="Ctrl+C",
+    copy_plain_image=tk.PhotoImage(data=ICON_COPY),
+    copy_plain_compound="left",
+    copy_plain_bindings=[
+        f"<{ctrl_key}-c>",
+        f"<{ctrl_key}-C>",
+    ],
+)
 ```
 
 #### **Changing key bindings**

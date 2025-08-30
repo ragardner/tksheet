@@ -10,7 +10,6 @@ from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from difflib import SequenceMatcher
 from itertools import chain, islice, repeat
-from platform import system as get_os
 from types import ModuleType
 from typing import Any, Literal
 
@@ -36,30 +35,62 @@ def wrap_text(
     if wrap == "c":
         current_line = []
         for line in text.split("\n"):
-            for char in line:
+            for c in line:
                 try:
-                    char_width = widths[char]
+                    char_width = widths[c]
                 except KeyError:
-                    char_width = char_width_fn(char)
+                    char_width = char_width_fn(c)
+                # most of the time the char will not be a tab
+                if c != "\t":
+                    # adding char to line would result in wrap
+                    if line_width + char_width >= max_width:
+                        if total_lines >= start_line:
+                            yield "".join(current_line)
 
-                # adding char to line would result in wrap
-                if line_width + char_width >= max_width:
-                    if total_lines >= start_line:
-                        yield "".join(current_line)
+                        total_lines += 1
+                        if total_lines >= max_lines:
+                            return
+                        current_line = []
+                        line_width = 0
 
-                    total_lines += 1
-                    if total_lines >= max_lines:
-                        return
-                    current_line = []
-                    line_width = 0
-
-                    if char_width <= max_width:
-                        current_line.append(char)
-                        line_width = char_width
-                # adding char to line is okay
+                        if char_width <= max_width:
+                            current_line.append(c)
+                            line_width = char_width
+                    # adding char to line is okay
+                    else:
+                        current_line.append(c)
+                        line_width += char_width
+                # if char happens to be a tab
                 else:
-                    current_line.append(char)
-                    line_width += char_width
+                    if (remainder := line_width % char_width) > 0:
+                        char_width = char_width - remainder
+
+                    # adding tab to line would result in wrap
+                    if line_width + char_width >= max_width:
+                        if total_lines >= start_line:
+                            yield "".join(current_line)
+
+                        total_lines += 1
+                        if total_lines >= max_lines:
+                            return
+                        current_line = []
+                        line_width = 0
+
+                        if widths["\t"] <= max_width:
+                            current_line.append(c)
+                            line_width = widths["\t"]
+                        else:
+                            try:
+                                space_width = widths[" "]
+                            except KeyError:
+                                space_width = char_width_fn(" ")
+                            if space_width <= max_width:
+                                current_line.append(" ")
+                                line_width = space_width
+                    # adding tab to line is okay
+                    else:
+                        current_line.append(c)
+                        line_width += char_width
 
             if total_lines >= start_line:
                 yield "".join(current_line)
@@ -88,11 +119,11 @@ def wrap_text(
                 # check if word will fit
                 word_width = 0
                 word_char_widths = []
-                for char in word:
+                for c in word:
                     try:
-                        char_width = widths[char]
+                        char_width = widths[c]
                     except KeyError:
-                        char_width = char_width_fn(char)
+                        char_width = char_width_fn(c)
                     word_char_widths.append(char_width)
                     word_width += char_width
 
@@ -110,7 +141,7 @@ def wrap_text(
                         current_line = []
                         line_width = 0
 
-                    for char, w in zip(word, word_char_widths):
+                    for c, w in zip(word, word_char_widths):
                         # adding char to line would result in wrap
                         if line_width + w >= max_width:
                             if total_lines >= start_line:
@@ -123,11 +154,11 @@ def wrap_text(
                             line_width = 0
 
                             if w <= max_width:
-                                current_line.append(char)
+                                current_line.append(c)
                                 line_width = w
                         # adding char to line is okay
                         else:
-                            current_line.append(char)
+                            current_line.append(c)
                             line_width += w
 
                 # word won't fit on current line but will fit on a newline
@@ -160,15 +191,18 @@ def wrap_text(
         for line in text.split("\n"):
             line_width = 0
             current_line = []
-            for char in line:
+            for c in line:
                 try:
-                    char_width = widths[char]
+                    char_width = widths[c]
                 except KeyError:
-                    char_width = char_width_fn(char)
+                    char_width = char_width_fn(c)
+                if c == "\t" and (remainder := line_width % char_width) > 0:
+                    char_width = char_width - remainder
+
                 line_width += char_width
                 if line_width >= max_width:
                     break
-                current_line.append(char)
+                current_line.append(c)
 
             if total_lines >= start_line:
                 yield "".join(current_line)
@@ -199,14 +233,6 @@ def estimate_max_visible_cells(table: tk.Canvas) -> int:
 
     # Rough max cells
     return max_rows * max_cols
-
-
-def get_rc_binding(widget: tk.Misc) -> str:
-    os_name = get_os().lower()
-    if os_name != "darwin":
-        return "<3>"
-    window_system = widget.tk.call("tk", "windowingsystem").lower()
-    return "<2>" if window_system == "aqua" else "<3>"
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:

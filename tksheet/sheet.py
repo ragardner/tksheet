@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import tkinter as tk
 from bisect import bisect_left
 from collections import deque
@@ -46,7 +47,6 @@ from .functions import (
     get_checkbox_kwargs,
     get_dropdown_dict,
     get_dropdown_kwargs,
-    get_rc_binding,
     idx_param_to_int,
     is_iterable,
     key_to_span,
@@ -139,6 +139,7 @@ class Sheet(tk.Frame):
         all_columns_displayed: bool = True,
         displayed_rows: list[int] | None = None,
         all_rows_displayed: bool = True,
+        to_clipboard_dialect: csv.Dialect = csv.excel_tab,
         to_clipboard_delimiter: str = "\t",
         to_clipboard_quotechar: str = '"',
         to_clipboard_lineterminator: str = "\n",
@@ -207,7 +208,6 @@ class Sheet(tk.Frame):
         tooltip_width: int = 210,
         tooltip_height: int = 210,
         tooltip_hover_delay: int = 1200,
-        rc_binding: str | None = None,
         # colors
         outline_thickness: int = 0,
         theme: str = "light blue",
@@ -322,11 +322,6 @@ class Sheet(tk.Frame):
         self.unique_id = f"{default_timer()}{self.winfo_id()}".replace(".", "")
         self._startup_complete = False
         self.ops = new_sheet_options()
-        if isinstance(rc_binding, str):
-            self.ops["rc_binding"] = rc_binding
-        else:
-            self.ops["rc_binding"] = get_rc_binding(self)
-            rc_binding = self.ops["rc_binding"]
         if column_width is not None:
             default_column_width = column_width
         if header_height is not None:
@@ -720,7 +715,7 @@ class Sheet(tk.Frame):
             self.CH.extra_motion_func = func
             self.RI.extra_motion_func = func
             self.TL.extra_motion_func = func
-        elif binding == self.ops.rc_binding:
+        elif binding in self.ops.rc_bindings:
             self.MT.extra_rc_func = func
             self.CH.extra_rc_func = func
             self.RI.extra_rc_func = func
@@ -768,7 +763,7 @@ class Sheet(tk.Frame):
             self.CH.extra_motion_func = None
             self.RI.extra_motion_func = None
             self.TL.extra_motion_func = None
-        elif binding == self.ops.rc_binding:
+        elif binding in self.ops.rc_bindings:
             self.MT.extra_rc_func = None
             self.CH.extra_rc_func = None
             self.RI.extra_rc_func = None

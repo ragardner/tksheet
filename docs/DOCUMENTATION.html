@@ -702,7 +702,9 @@
 </li>
 </ul>
 <h3 id="known-issues"><strong>Known Issues</strong></h3>
-<ol>
+<ul>
+<li>Word wrap - Tabs and multiple spaces are rendered as a single space.</li>
+<li>Mac OS has both <code>&lt;2&gt;</code> and <code>&lt;3&gt;</code> bound for right click.</li>
 <li>When using <code>edit_validation()</code> to validate cell edits and pasting into the sheet:<ul>
 <li>If the sheets rows are expanded then the row numbers under the key <code>row</code> and <code>loc</code> are data indexes whereas the column numbers are displayed indexes.</li>
 <li>If the sheets columns are expanded then the column numbers under the key <code>column</code> and <code>loc</code> are data indexes whereas the row numbers are displayed indexes.</li>
@@ -710,7 +712,7 @@
 </ul>
 </li>
 <li>There may be some issues with toggle select mode and deselection.</li>
-</ol>
+</ul>
 <h3 id="limitations"><strong>Limitations</strong></h3>
 <p>Some examples of things that are not possible with tksheet:</p>
 <ul>
@@ -974,6 +976,7 @@ app.mainloop()
     all_columns_displayed: bool = True,
     displayed_rows: list[int] | None = None,
     all_rows_displayed: bool = True,
+    to_clipboard_dialect: csv.Dialect = csv.excel_tab,
     to_clipboard_delimiter: str = &quot;\t&quot;,
     to_clipboard_quotechar: str = '&quot;',
     to_clipboard_lineterminator: str = &quot;\n&quot;,
@@ -1438,21 +1441,16 @@ horizontal_scroll_pressed_fg
 &quot;cut_accelerator&quot;: &quot;Ctrl+X&quot;,
 &quot;cut_image&quot;: tk.PhotoImage(data=ICON_CUT),
 &quot;cut_compound&quot;: &quot;left&quot;,
-# cut contents
-&quot;cut_contents_label&quot;: &quot;Cut contents&quot;,
-&quot;cut_contents_accelerator&quot;: &quot;Ctrl+X&quot;,
-&quot;cut_contents_image&quot;: tk.PhotoImage(data=ICON_CUT),
-&quot;cut_contents_compound&quot;: &quot;left&quot;,
 # copy
 &quot;copy_label&quot;: &quot;Copy&quot;,
 &quot;copy_accelerator&quot;: &quot;Ctrl+C&quot;,
 &quot;copy_image&quot;: tk.PhotoImage(data=ICON_COPY),
 &quot;copy_compound&quot;: &quot;left&quot;,
-# copy contents
-&quot;copy_contents_label&quot;: &quot;Copy contents&quot;,
-&quot;copy_contents_accelerator&quot;: &quot;Ctrl+C&quot;,
-&quot;copy_contents_image&quot;: tk.PhotoImage(data=ICON_COPY),
-&quot;copy_contents_compound&quot;: &quot;left&quot;,
+# copy plain
+&quot;copy_plain_label&quot;: &quot;Copy text&quot;,
+&quot;copy_plain_accelerator&quot;: &quot;Ctrl+Insert&quot;,
+&quot;copy_plain_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_plain_compound&quot;: &quot;left&quot;,
 # paste
 &quot;paste_label&quot;: &quot;Paste&quot;,
 &quot;paste_accelerator&quot;: &quot;Ctrl+V&quot;,
@@ -1581,9 +1579,13 @@ horizontal_scroll_pressed_fg
 &quot;redo_image&quot;: tk.PhotoImage(data=ICON_REDO),
 &quot;redo_compound&quot;: &quot;left&quot;,
 # bindings
+&quot;rc_bindings&quot;: [&quot;&lt;2&gt;&quot;, &quot;&lt;3&gt;&quot;] if USER_OS == &quot;darwin&quot; else [&quot;&lt;3&gt;&quot;],
 &quot;copy_bindings&quot;: [
     f&quot;&lt;{ctrl_key}-c&gt;&quot;,
     f&quot;&lt;{ctrl_key}-C&gt;&quot;,
+],
+&quot;copy_plain_bindings&quot;: [
+    f&quot;&lt;{ctrl_key}-Insert&gt;&quot;,
 ],
 &quot;cut_bindings&quot;: [
     f&quot;&lt;{ctrl_key}-x&gt;&quot;,
@@ -1686,6 +1688,7 @@ else [&quot;&lt;Home&gt;&quot;],
 &quot;set_cell_sizes_on_zoom&quot;: False,
 &quot;auto_resize_columns&quot;: None,
 &quot;auto_resize_rows&quot;: None,
+&quot;to_clipboard_dialect&quot;: csv.excel_tab,
 &quot;to_clipboard_delimiter&quot;: &quot;\t&quot;,
 &quot;to_clipboard_quotechar&quot;: '&quot;',
 &quot;to_clipboard_lineterminator&quot;: &quot;\n&quot;,
@@ -2570,21 +2573,16 @@ self.sheet.bind(&quot;&lt;&lt;SheetModified&gt;&gt;&quot;, self.sheet_was_modifi
 &quot;cut_accelerator&quot;: &quot;Ctrl+X&quot;,
 &quot;cut_image&quot;: tk.PhotoImage(data=ICON_CUT),
 &quot;cut_compound&quot;: &quot;left&quot;,
-# cut contents
-&quot;cut_contents_label&quot;: &quot;Cut contents&quot;,
-&quot;cut_contents_accelerator&quot;: &quot;Ctrl+X&quot;,
-&quot;cut_contents_image&quot;: tk.PhotoImage(data=ICON_CUT),
-&quot;cut_contents_compound&quot;: &quot;left&quot;,
 # copy
 &quot;copy_label&quot;: &quot;Copy&quot;,
 &quot;copy_accelerator&quot;: &quot;Ctrl+C&quot;,
 &quot;copy_image&quot;: tk.PhotoImage(data=ICON_COPY),
 &quot;copy_compound&quot;: &quot;left&quot;,
-# copy contents
-&quot;copy_contents_label&quot;: &quot;Copy contents&quot;,
-&quot;copy_contents_accelerator&quot;: &quot;Ctrl+C&quot;,
-&quot;copy_contents_image&quot;: tk.PhotoImage(data=ICON_COPY),
-&quot;copy_contents_compound&quot;: &quot;left&quot;,
+# copy plain
+&quot;copy_plain_label&quot;: &quot;Copy text&quot;,
+&quot;copy_plain_accelerator&quot;: &quot;Ctrl+Insert&quot;,
+&quot;copy_plain_image&quot;: tk.PhotoImage(data=ICON_COPY),
+&quot;copy_plain_compound&quot;: &quot;left&quot;,
 # paste
 &quot;paste_label&quot;: &quot;Paste&quot;,
 &quot;paste_accelerator&quot;: &quot;Ctrl+V&quot;,
@@ -2716,6 +2714,29 @@ self.sheet.bind(&quot;&lt;&lt;SheetModified&gt;&gt;&quot;, self.sheet_was_modifi
 <p>Example:</p>
 <pre><code class="language-python"># changing the copy label to the spanish for Copy
 sheet.set_options(copy_label=&quot;Copiar&quot;, copy_image=tk.PhotoImage(file=&quot;filepath_to_img.png&quot;), copy_compound=&quot;left&quot;)
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>To remove the <code>Copy plain</code> right click menu option when copy is enabled you can overwrite it, e.g.</li>
+</ul>
+<pre><code class="language-python">from tksheet import (
+    ICON_COPY,
+    Sheet,
+    ctrl_key,
+)
+
+# ...
+
+self.sheet.set_options(
+    copy_plain_label=&quot;Copy&quot;,
+    copy_plain_accelerator=&quot;Ctrl+C&quot;,
+    copy_plain_image=tk.PhotoImage(data=ICON_COPY),
+    copy_plain_compound=&quot;left&quot;,
+    copy_plain_bindings=[
+        f&quot;&lt;{ctrl_key}-c&gt;&quot;,
+        f&quot;&lt;{ctrl_key}-C&gt;&quot;,
+    ],
+)
 </code></pre>
 <h4 id="changing-key-bindings"><strong>Changing key bindings</strong></h4>
 <p>You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the <a href="#sheet-options"><code>set_options()</code> function</a> with any the following keyword arguments:</p>

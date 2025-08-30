@@ -89,7 +89,8 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<B1-Motion>", self.b1_motion)
         self.bind("<ButtonRelease-1>", self.b1_release)
         self.bind("<Double-Button-1>", self.double_b1)
-        self.bind(self.PAR.ops.rc_binding, self.rc)
+        for b in self.PAR.ops.rc_bindings:
+            self.bind(b, self.rc)
 
     def redraw(self) -> None:
         self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
@@ -148,14 +149,16 @@ class TopLeftRectangle(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(self.PAR.ops.rc_binding, self.rc)
+            for b in self.PAR.ops.rc_bindings:
+                self.bind(b, self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(self.PAR.ops.rc_binding)
+            for b in self.PAR.ops.rc_bindings:
+                self.unbind(b)
 
     def set_dimensions(
         self,

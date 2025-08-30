@@ -14,7 +14,7 @@ class TextEditorTkText(tk.Text):
         self,
         parent: tk.Misc,
         newline_binding: None | Callable = None,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -30,7 +30,8 @@ class TextEditorTkText(tk.Text):
         self.newline_bindng = newline_binding
         self.rc_popup_menu = tk.Menu(self, tearoff=0)
         self.bind("<1>", lambda event: self.focus_set())
-        self.bind(rc_binding, self.rc)
+        for b in rc_bindings:
+            self.bind(b, self.rc)
         self.bind(f"<{ctrl_key}-a>", self.select_all)
         self.bind(f"<{ctrl_key}-A>", self.select_all)
         self.bind("<Delete>", self.delete_key)
@@ -195,7 +196,7 @@ class TextEditor(tk.Frame):
         self,
         parent: tk.Misc,
         newline_binding: None | Callable = None,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -209,7 +210,7 @@ class TextEditor(tk.Frame):
         self.parent = parent
         self.r = 0
         self.c = 0
-        self.tktext = TextEditorTkText(self, newline_binding=newline_binding, rc_binding=rc_binding)
+        self.tktext = TextEditorTkText(self, newline_binding=newline_binding, rc_bindings=rc_bindings)
         self.tktext.grid(row=0, column=0, sticky="nswe")
 
     def get(self) -> str:

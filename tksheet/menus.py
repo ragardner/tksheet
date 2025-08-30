@@ -63,15 +63,16 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.copy_compound,
             **mnkwgs,
         )
-        menu_add_command(
-            popup_menu,
-            label=MT.PAR.ops.copy_plain_label,
-            accelerator=MT.PAR.ops.copy_plain_accelerator,
-            command=MT.ctrl_c_plain,
-            image=MT.PAR.ops.copy_plain_image,
-            compound=MT.PAR.ops.copy_plain_compound,
-            **mnkwgs,
-        )
+        if not MT.single_cell_selected():
+            menu_add_command(
+                popup_menu,
+                label=MT.PAR.ops.copy_plain_label,
+                accelerator=MT.PAR.ops.copy_plain_accelerator,
+                command=MT.ctrl_c_plain,
+                image=MT.PAR.ops.copy_plain_image,
+                compound=MT.PAR.ops.copy_plain_compound,
+                **mnkwgs,
+            )
     if (
         MT.paste_enabled
         and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
@@ -101,7 +102,7 @@ def build_table_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.delete_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_cells_enabled and selected and not selections_readonly:
+    if MT.rc_sort_cells_enabled and selected and not selections_readonly and not MT.single_cell_selected():
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_cells_label,
@@ -191,11 +192,11 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     ):
         menu_add_command(
             popup_menu,
-            label=MT.PAR.ops.cut_contents_label,
-            accelerator=MT.PAR.ops.cut_contents_accelerator,
+            label=MT.PAR.ops.cut_label,
+            accelerator=MT.PAR.ops.cut_accelerator,
             command=MT.ctrl_x,
-            image=MT.PAR.ops.cut_contents_image,
-            compound=MT.PAR.ops.cut_contents_compound,
+            image=MT.PAR.ops.cut_image,
+            compound=MT.PAR.ops.cut_compound,
             **mnkwgs,
         )
     if (
@@ -205,22 +206,23 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     ):
         menu_add_command(
             popup_menu,
-            label=MT.PAR.ops.copy_contents_label,
-            accelerator=MT.PAR.ops.copy_contents_accelerator,
+            label=MT.PAR.ops.copy_label,
+            accelerator=MT.PAR.ops.copy_accelerator,
             command=MT.ctrl_c,
-            image=MT.PAR.ops.copy_contents_image,
-            compound=MT.PAR.ops.copy_contents_compound,
+            image=MT.PAR.ops.copy_image,
+            compound=MT.PAR.ops.copy_compound,
             **mnkwgs,
         )
-        menu_add_command(
-            popup_menu,
-            label=MT.PAR.ops.copy_contents_plain_label,
-            accelerator=MT.PAR.ops.copy_contents_plain_accelerator,
-            command=MT.ctrl_c_plain,
-            image=MT.PAR.ops.copy_contents_plain_image,
-            compound=MT.PAR.ops.copy_contents_plain_compound,
-            **mnkwgs,
-        )
+        if not MT.single_cell_selected():
+            menu_add_command(
+                popup_menu,
+                label=MT.PAR.ops.copy_plain_label,
+                accelerator=MT.PAR.ops.copy_plain_accelerator,
+                command=MT.ctrl_c_plain,
+                image=MT.PAR.ops.copy_plain_image,
+                compound=MT.PAR.ops.copy_plain_compound,
+                **mnkwgs,
+            )
     if (
         MT.paste_enabled
         and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
@@ -276,7 +278,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.insert_rows_below_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_row_enabled and selected and not selections_readonly:
+    if MT.rc_sort_row_enabled and selected and not selections_readonly and not MT.single_cell_selected():
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_row_label,
@@ -295,7 +297,7 @@ def build_index_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.sort_row_reverse_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_columns_enabled and selected:
+    if MT.rc_sort_columns_enabled and selected and not MT.single_cell_selected():
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_columns_label,
@@ -367,11 +369,11 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     ):
         menu_add_command(
             popup_menu,
-            label=MT.PAR.ops.cut_contents_label,
-            accelerator=MT.PAR.ops.cut_contents_accelerator,
+            label=MT.PAR.ops.cut_label,
+            accelerator=MT.PAR.ops.cut_accelerator,
             command=MT.ctrl_x,
-            image=MT.PAR.ops.cut_contents_image,
-            compound=MT.PAR.ops.cut_contents_compound,
+            image=MT.PAR.ops.cut_image,
+            compound=MT.PAR.ops.cut_compound,
             **mnkwgs,
         )
     if (
@@ -381,22 +383,23 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
     ):
         menu_add_command(
             popup_menu,
-            label=MT.PAR.ops.copy_contents_label,
-            accelerator=MT.PAR.ops.copy_contents_accelerator,
+            label=MT.PAR.ops.copy_label,
+            accelerator=MT.PAR.ops.copy_accelerator,
             command=MT.ctrl_c,
-            image=MT.PAR.ops.copy_contents_image,
-            compound=MT.PAR.ops.copy_contents_compound,
+            image=MT.PAR.ops.copy_image,
+            compound=MT.PAR.ops.copy_compound,
             **mnkwgs,
         )
-        menu_add_command(
-            popup_menu,
-            label=MT.PAR.ops.copy_contents_plain_label,
-            accelerator=MT.PAR.ops.copy_contents_plain_accelerator,
-            command=MT.ctrl_c_plain,
-            image=MT.PAR.ops.copy_contents_plain_image,
-            compound=MT.PAR.ops.copy_contents_plain_compound,
-            **mnkwgs,
-        )
+        if not MT.single_cell_selected():
+            menu_add_command(
+                popup_menu,
+                label=MT.PAR.ops.copy_plain_label,
+                accelerator=MT.PAR.ops.copy_plain_accelerator,
+                command=MT.ctrl_c_plain,
+                image=MT.PAR.ops.copy_plain_image,
+                compound=MT.PAR.ops.copy_plain_compound,
+                **mnkwgs,
+            )
     if (
         MT.paste_enabled
         and (not selections_readonly or MT.PAR.ops.paste_can_expand_x or MT.PAR.ops.paste_can_expand_y)
@@ -452,7 +455,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.insert_columns_right_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_column_enabled and selected and not selections_readonly:
+    if MT.rc_sort_column_enabled and selected and not selections_readonly and not MT.single_cell_selected():
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_column_label,
@@ -471,7 +474,7 @@ def build_header_rc_menu(MT, popup_menu: tk.Menu, selected: Selected) -> None:
             compound=MT.PAR.ops.sort_column_reverse_compound,
             **mnkwgs,
         )
-    if MT.rc_sort_rows_enabled and selected:
+    if MT.rc_sort_rows_enabled and selected and not MT.single_cell_selected():
         menu_add_command(
             popup_menu,
             label=MT.PAR.ops.sort_rows_label,

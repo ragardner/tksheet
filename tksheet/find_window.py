@@ -16,7 +16,7 @@ class FindWindowTkText(tk.Text):
     def __init__(
         self,
         parent: tk.Misc,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -31,7 +31,8 @@ class FindWindowTkText(tk.Text):
         self.parent = parent
         self.rc_popup_menu = tk.Menu(self, tearoff=0)
         self.bind("<1>", lambda event: self.focus_set())
-        self.bind(rc_binding, self.rc)
+        for b in rc_bindings:
+            self.bind(b, self.rc)
         self.bind(f"<{ctrl_key}-a>", self.select_all)
         self.bind(f"<{ctrl_key}-A>", self.select_all)
         self.bind("<Delete>", self.delete_key)
@@ -185,7 +186,7 @@ class FindWindow(tk.Frame):
         replace_all_func: Callable,
         toggle_replace_func: Callable,
         drag_func: Callable,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -217,7 +218,7 @@ class FindWindow(tk.Frame):
         self.toggle_replace.grid(row=0, column=0, sticky="ns")
         self.toggle_replace.grid_remove()
 
-        self.tktext = FindWindowTkText(self, rc_binding=rc_binding)
+        self.tktext = FindWindowTkText(self, rc_bindings=rc_bindings)
         self.tktext.grid(row=0, column=1, sticky="nswe")
 
         self.find_previous_arrow = tk.Label(self, text="↑", cursor="hand2", highlightthickness=1)
@@ -237,7 +238,7 @@ class FindWindow(tk.Frame):
         self.separator.grid(row=1, column=1, columnspan=3, sticky="we")
         self.separator.grid_remove()
 
-        self.replace_tktext = FindWindowTkText(self, rc_binding=rc_binding)
+        self.replace_tktext = FindWindowTkText(self, rc_bindings=rc_bindings)
         self.replace_tktext.grid(row=2, column=1, columnspan=4, sticky="nswe")
         self.replace_tktext.grid_remove()
 

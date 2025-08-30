@@ -1,5 +1,20 @@
 ### Version 7.5.14
-####
+#### Removed:
+- Removed settings for cut_contents, copy_contents and the new plain equivalent added in `7.5.13`. These settings now use the same as the usual cut and copy settings.
+
+#### Changed:
+- Mac OS now binds both mouse button 2 and 3 for right click [#2](https://github.com/ragardner/tksheet/issues/2).
+- Changed copy text binding to `Ctrl + Ins`.
+- Changed copy text icon to differentiate from the normal copy.
+
+#### Added:
+- Right click binding setting to modify which buttons/keys are used for right click.
+- Setting for changing the to clipboard csv writer dialect.
+
+#### Fixed:
+- Tab characters causing cell text overflow.
+- Don't show tooltip when resizing is enabled and mouse is over grid lines in index or header.
+- More right click menu filtering based on selections.
 
 ### Version 7.5.13
 #### Fixed:

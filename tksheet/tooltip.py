@@ -13,7 +13,7 @@ class TooltipTkText(tk.Text):
     def __init__(
         self,
         parent: tk.Misc,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(
             parent,
@@ -28,7 +28,8 @@ class TooltipTkText(tk.Text):
         self.parent = parent
         self.rc_popup_menu = tk.Menu(self, tearoff=0)
         self.bind("<1>", lambda event: self.focus_set())
-        self.bind(rc_binding, self.rc)
+        for b in rc_bindings:
+            self.bind(b, self.rc)
         self.bind(f"<{ctrl_key}-a>", self.select_all)
         self.bind(f"<{ctrl_key}-A>", self.select_all)
         self.bind("<Delete>", self.delete_key)
@@ -175,7 +176,7 @@ class Tooltip(tk.Toplevel):
         select_bg: str,
         select_fg: str,
         scrollbar_style: str,
-        rc_binding: str = "<3>",
+        rc_bindings: list[str] = "<3>",
     ) -> None:
         super().__init__(parent)
         self.withdraw()  # Hide until positioned
@@ -203,7 +204,7 @@ class Tooltip(tk.Toplevel):
 
         # Content frame as child of border_frame
         self.content_frame = ttk.Frame(self.border_frame)
-        self.content_text = TooltipTkText(self.content_frame, rc_binding=rc_binding)
+        self.content_text = TooltipTkText(self.content_frame, rc_bindings=rc_bindings)
         self.content_scrollbar = ttk.Scrollbar(self.content_frame, orient="vertical", style=scrollbar_style)
         self.content_scrollbar.pack(side="right", fill="y")
         self.content_text.pack(side="left", fill="both", expand=True)
@@ -212,7 +213,7 @@ class Tooltip(tk.Toplevel):
 
         # Note frame as child of border_frame
         self.note_frame = ttk.Frame(self.border_frame)
-        self.note_text = TooltipTkText(self.note_frame, rc_binding=rc_binding)
+        self.note_text = TooltipTkText(self.note_frame, rc_bindings=rc_bindings)
         self.note_scrollbar = ttk.Scrollbar(self.note_frame, orient="vertical", style=scrollbar_style)
         self.note_scrollbar.pack(side="right", fill="y")
         self.note_text.pack(side="left", fill="both", expand=True)

@@ -70,7 +70,7 @@ class RowIndex(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.ops),
                 **get_bg_fg(self.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
-                "rc_binding": self.ops.rc_binding,
+                "rc_bindings": self.ops.rc_bindings,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -161,14 +161,16 @@ class RowIndex(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(self.ops.rc_binding, self.rc)
+            for b in self.ops.rc_bindings:
+                self.bind(b, self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(self.ops.rc_binding)
+            for b in self.ops.rc_bindings:
+                self.unbind(b)
 
     def set_width(self, new_width: int, set_TL: bool = False, recreate_selection_boxes: bool = True) -> None:
         try:
@@ -1088,7 +1090,7 @@ class RowIndex(tk.Canvas):
         if txt:
             lines = findall(r"[^\n]+", txt)
             h = self.MT.index_txt_height * len(lines) + 5
-            w = max(sum(self.wrap_get_char_w(c) for c in line) for line in lines) + 8
+            w = max(sum(self.char_width_fn(c) for c in line) for line in lines) + 8
         else:
             w = self.ops.default_row_index_width
             h = self.MT.min_row_height
@@ -1110,7 +1112,7 @@ class RowIndex(tk.Canvas):
     def get_cell_width(self, datarn: int) -> int:
         txt = self.cell_str(datarn, fix=False)
         if txt:
-            w = max(sum(self.wrap_get_char_w(c) for c in line) for line in findall(r"[^\n]+", txt)) + 8
+            w = max(sum(self.char_width_fn(c) for c in line) for line in findall(r"[^\n]+", txt)) + 8
         else:
             w = self.ops.default_row_index_width
         # self.get_cell_kwargs not used here to boost performance
@@ -1137,7 +1139,7 @@ class RowIndex(tk.Canvas):
                     text=self.cell_str(datarn, fix=False),
                     max_width=self.current_width,
                     max_lines=float("inf"),
-                    char_width_fn=self.wrap_get_char_w,
+                    char_width_fn=self.char_width_fn,
                     widths=self.MT.char_widths[self.index_font],
                     wrap=self.ops.index_wrap,
                 )
@@ -1283,11 +1285,11 @@ class RowIndex(tk.Canvas):
     def auto_set_index_width(self, end_row: int, only_rows: list) -> bool:
         if not isinstance(self.MT._row_index, int) and not self.MT._row_index:
             if self.ops.default_row_index == "letters":
-                new_w = sum(self.wrap_get_char_w(c) for c in num2alpha(end_row)) + 20
+                new_w = sum(self.char_width_fn(c) for c in num2alpha(end_row)) + 20
             elif self.ops.default_row_index == "numbers":
-                new_w = sum(self.wrap_get_char_w(c) for c in str(end_row)) + 20
+                new_w = sum(self.char_width_fn(c) for c in str(end_row)) + 20
             elif self.ops.default_row_index == "both":
-                new_w = sum(self.wrap_get_char_w(c) for c in f"{end_row + 1} {num2alpha(end_row)}") + 20
+                new_w = sum(self.char_width_fn(c) for c in f"{end_row + 1} {num2alpha(end_row)}") + 20
             elif self.ops.default_row_index is None:
                 new_w = 20
         elif self.ops.auto_resize_row_index is True:
@@ -1654,7 +1656,7 @@ class RowIndex(tk.Canvas):
         except Exception:
             return False
 
-    def wrap_get_char_w(self, c: str) -> int:
+    def char_width_fn(self, c: str) -> int:
         if c in self.MT.char_widths[self.index_font]:
             return self.MT.char_widths[self.index_font][c]
         else:
@@ -1868,7 +1870,7 @@ class RowIndex(tk.Canvas):
                 text=text,
                 max_width=max_width,
                 max_lines=int((rbotgridln - rtopgridln - 2) / self.MT.index_txt_height),
-                char_width_fn=self.wrap_get_char_w,
+                char_width_fn=self.char_width_fn,
                 widths=self.MT.char_widths[font],
                 wrap=wrap,
                 start_line=start_line,
@@ -1997,7 +1999,11 @@ class RowIndex(tk.Canvas):
         current_x, current_y = self.winfo_pointerx(), self.winfo_pointery()
         if current_x < 0 or current_y < 0:
             return
-        if abs(current_x - self.tooltip_last_x) <= 1 and abs(current_y - self.tooltip_last_y) <= 1:
+        if (
+            not self.cget("cursor")
+            and abs(current_x - self.tooltip_last_x) <= 1
+            and abs(current_y - self.tooltip_last_y) <= 1
+        ):
             self.show_tooltip()
         else:
             self.tooltip_last_x, self.tooltip_last_y = current_x, current_y
@@ -2170,7 +2176,7 @@ class RowIndex(tk.Canvas):
         }
         if not self.text_editor.window:
             self.text_editor.window = TextEditor(
-                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.ops.rc_binding
+                self, newline_binding=self.text_editor_newline_binding, rc_bindings=self.ops.rc_bindings
             )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)

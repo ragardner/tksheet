@@ -68,7 +68,7 @@ class ColumnHeaders(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.ops),
                 **get_bg_fg(self.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
-                "rc_binding": self.ops.rc_binding,
+                "rc_bindings": self.ops.rc_bindings,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -153,7 +153,8 @@ class ColumnHeaders(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(self.ops.rc_binding, self.rc)
+            for b in self.ops.rc_bindings:
+                self.bind(b, self.rc)
             self.bind("<MouseWheel>", self.mousewheel)
             if USER_OS == "linux":
                 self.bind("<Button-4>", self.mousewheel)
@@ -164,7 +165,8 @@ class ColumnHeaders(tk.Canvas):
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(self.ops.rc_binding)
+            for b in self.ops.rc_bindings:
+                self.unbind(b)
             self.unbind("<MouseWheel>")
             if USER_OS == "linux":
                 self.unbind("<Button-4>")
@@ -1510,7 +1512,7 @@ class ColumnHeaders(tk.Canvas):
         except Exception:
             return False
 
-    def wrap_get_char_w(self, c: str) -> int:
+    def char_width_fn(self, c: str) -> int:
         if c in self.MT.char_widths[self.header_font]:
             return self.MT.char_widths[self.header_font][c]
         else:
@@ -1703,7 +1705,7 @@ class ColumnHeaders(tk.Canvas):
                 text=text,
                 max_width=max_width,
                 max_lines=int((self.current_height - top - 2) / txt_h),
-                char_width_fn=self.wrap_get_char_w,
+                char_width_fn=self.char_width_fn,
                 widths=self.MT.char_widths[font],
                 wrap=wrap,
             )
@@ -1824,7 +1826,11 @@ class ColumnHeaders(tk.Canvas):
         current_x, current_y = self.winfo_pointerx(), self.winfo_pointery()
         if current_x < 0 or current_y < 0:
             return
-        if abs(current_x - self.tooltip_last_x) <= 1 and abs(current_y - self.tooltip_last_y) <= 1:
+        if (
+            not self.cget("cursor")
+            and abs(current_x - self.tooltip_last_x) <= 1
+            and abs(current_y - self.tooltip_last_y) <= 1
+        ):
             self.show_tooltip()
         else:
             self.tooltip_last_x, self.tooltip_last_y = current_x, current_y
@@ -1999,7 +2005,7 @@ class ColumnHeaders(tk.Canvas):
         }
         if not self.text_editor.window:
             self.text_editor.window = TextEditor(
-                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.ops.rc_binding
+                self, newline_binding=self.text_editor_newline_binding, rc_bindings=self.ops.rc_bindings
             )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)

@@ -145,7 +145,7 @@ class MainTable(tk.Canvas):
                 "menu_kwargs": get_menu_kwargs(self.PAR.ops),
                 **get_bg_fg(self.PAR.ops),
                 "scrollbar_style": f"Sheet{self.PAR.unique_id}.Vertical.TScrollbar",
-                "rc_binding": self.PAR.ops.rc_binding,
+                "rc_bindings": self.PAR.ops.rc_bindings,
             }
         )
         self.tooltip_widgets = widget_descendants(self.tooltip)
@@ -420,7 +420,6 @@ class MainTable(tk.Canvas):
             ("<Shift-ButtonPress-1>", self, self.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.CH, self.CH.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.RI, self.RI.shift_b1_press),
-            (self.PAR.ops.rc_binding, self, self.rc),
             (f"<{ctrl_key}-ButtonPress-1>", self, self.ctrl_b1_press),
             (f"<{ctrl_key}-ButtonPress-1>", self.CH, self.CH.ctrl_b1_press),
             (f"<{ctrl_key}-ButtonPress-1>", self.RI, self.RI.ctrl_b1_press),
@@ -431,6 +430,8 @@ class MainTable(tk.Canvas):
             (f"<{ctrl_key}-B1-Motion>", self.CH, self.CH.ctrl_b1_motion),
             (f"<{ctrl_key}-B1-Motion>", self.RI, self.RI.ctrl_b1_motion),
         )
+        for b in self.PAR.ops.rc_bindings:
+            bindings += ((b, self, self.rc),)
         all_canvas_bindings = (
             ("<Shift-MouseWheel>", self.shift_mousewheel),
             ("<Control-MouseWheel>", self.ctrl_mousewheel),
@@ -570,7 +571,7 @@ class MainTable(tk.Canvas):
     def get_find_window_dimensions_coords(self, w_width: int | None) -> tuple[int, int, int, int]:
         if w_width is None:
             w_width = self.winfo_width()
-        width = min(self.wrap_get_char_w("X") * 23, w_width - 7)
+        width = min(self.char_width_fn("X") * 23, w_width - 7)
         height = self.min_row_height
         if self.find_window.window and self.find_window.window.replace_visible:
             height *= 2
@@ -626,7 +627,7 @@ class MainTable(tk.Canvas):
                 replace_all_func=self.replace_all,
                 toggle_replace_func=self.reposition_find_window,
                 drag_func=self.drag_find_window,
-                rc_binding=self.PAR.ops.rc_binding,
+                rc_bindings=self.PAR.ops.rc_bindings,
             )
             self.find_window.canvas_id = self.create_window((x, y), window=self.find_window.window, anchor="nw")
         else:
@@ -987,7 +988,7 @@ class MainTable(tk.Canvas):
         s = io.StringIO()
         writer = csv.writer(
             s,
-            dialect=csv.excel_tab,
+            dialect=self.PAR.ops.to_clipboard_dialect,
             delimiter=self.PAR.ops.to_clipboard_delimiter,
             quotechar=self.PAR.ops.to_clipboard_quotechar,
             lineterminator=self.PAR.ops.to_clipboard_lineterminator,
@@ -3371,16 +3372,17 @@ class MainTable(tk.Canvas):
             or (datacn in self.col_options and "readonly" in self.col_options[datacn])
         )
 
+    def single_cell_selected(self) -> bool:
+        return len(self.selection_boxes) == 1 and box_is_single_cell(*next(iter(self.selection_boxes.values())).coords)
+
     def estimate_selections_readonly(self) -> bool:
         max_cells = estimate_max_visible_cells(self)
         total_cells = 0
         for box in self.selection_boxes.values():
             r1, c1, r2, c2 = box.coords
             total_cells += (r2 - r1) * (c2 - c1)
-
         if total_cells > max_cells:
             return False
-
         for box in self.selection_boxes.values():
             r1, c1, r2, c2 = box.coords
             for r in range(r1, r2):
@@ -4375,7 +4377,7 @@ class MainTable(tk.Canvas):
                     text=self.cell_str(datarn, datacn, get_displayed=True),
                     max_width=self.get_cell_max_width(datarn, dispcn),
                     max_lines=float("inf"),
-                    char_width_fn=self.wrap_get_char_w,
+                    char_width_fn=self.char_width_fn,
                     widths=self.char_widths[self.table_font],
                     wrap=self.PAR.ops.table_wrap,
                 )
@@ -6173,17 +6175,26 @@ class MainTable(tk.Canvas):
 
         return cells
 
-    def wrap_get_char_w(self, c: str) -> int:
+    def char_width_fn(self, c: str) -> int:
         if c in self.char_widths[self.table_font]:
             return self.char_widths[self.table_font][c]
         else:
-            self.txt_measure_canvas.itemconfig(
-                self.txt_measure_canvas_text,
-                text=_test_str + c,
-                font=self.table_font,
-            )
-            b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
-            wd = b[2] - b[0] - self.table_test_str_w
+            if c == "\t":
+                self.txt_measure_canvas.itemconfig(
+                    self.txt_measure_canvas_text,
+                    text="\t",
+                    font=self.table_font,
+                )
+                b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
+                wd = b[2] - b[0] - 2
+            else:
+                self.txt_measure_canvas.itemconfig(
+                    self.txt_measure_canvas_text,
+                    text=_test_str + c,
+                    font=self.table_font,
+                )
+                b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
+                wd = b[2] - b[0] - self.table_test_str_w
             self.char_widths[self.table_font][c] = wd
             return wd
 
@@ -6499,7 +6510,7 @@ class MainTable(tk.Canvas):
                     text=cells[loc],
                     max_width=max_width,
                     max_lines=int((rbotgridln - rtopgridln - 2) / self.table_txt_height),
-                    char_width_fn=self.wrap_get_char_w,
+                    char_width_fn=self.char_width_fn,
                     widths=self.char_widths[font],
                     wrap=wrap,
                     start_line=start_line,
@@ -7473,7 +7484,7 @@ class MainTable(tk.Canvas):
         }
         if not self.text_editor.window:
             self.text_editor.window = TextEditor(
-                self, newline_binding=self.text_editor_newline_binding, rc_binding=self.PAR.ops.rc_binding
+                self, newline_binding=self.text_editor_newline_binding, rc_bindings=self.PAR.ops.rc_bindings
             )
             self.text_editor.canvas_id = self.create_window((x, y), window=self.text_editor.window, anchor="nw")
         self.text_editor.window.reset(**kwargs)

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import csv
 import tkinter as tk
 
 from .constants import (  # noqa: F401
     ICON_ADD,
     ICON_CLEAR,
     ICON_COPY,
+    ICON_COPY_PLAIN,
     ICON_CUT,
     ICON_DEL,
     ICON_EDIT,
@@ -68,31 +70,16 @@ def new_sheet_options() -> DotDict:
             "cut_accelerator": "Ctrl+X",
             "cut_image": tk.PhotoImage(data=ICON_CUT),
             "cut_compound": "left",
-            # cut contents
-            "cut_contents_label": "Cut contents",
-            "cut_contents_accelerator": "Ctrl+X",
-            "cut_contents_image": tk.PhotoImage(data=ICON_CUT),
-            "cut_contents_compound": "left",
             # copy
             "copy_label": "Copy",
             "copy_accelerator": "Ctrl+C",
             "copy_image": tk.PhotoImage(data=ICON_COPY),
             "copy_compound": "left",
-            # copy contents
-            "copy_contents_label": "Copy contents",
-            "copy_contents_accelerator": "Ctrl+C",
-            "copy_contents_image": tk.PhotoImage(data=ICON_COPY),
-            "copy_contents_compound": "left",
             # copy plain
             "copy_plain_label": "Copy text",
-            "copy_plain_accelerator": "Ctrl+Alt+C",
-            "copy_plain_image": tk.PhotoImage(data=ICON_COPY),
+            "copy_plain_accelerator": "Ctrl+Ins",
+            "copy_plain_image": tk.PhotoImage(data=ICON_COPY_PLAIN),
             "copy_plain_compound": "left",
-            # copy contents plain
-            "copy_contents_plain_label": "Copy text contents",
-            "copy_contents_plain_accelerator": "Ctrl+Alt+C",
-            "copy_contents_plain_image": tk.PhotoImage(data=ICON_COPY),
-            "copy_contents_plain_compound": "left",
             # paste
             "paste_label": "Paste",
             "paste_accelerator": "Ctrl+V",
@@ -221,13 +208,13 @@ def new_sheet_options() -> DotDict:
             "redo_image": tk.PhotoImage(data=ICON_REDO),
             "redo_compound": "left",
             # bindings
+            "rc_bindings": ["<2>", "<3>"] if USER_OS == "darwin" else ["<3>"],
             "copy_bindings": [
                 f"<{ctrl_key}-c>",
                 f"<{ctrl_key}-C>",
             ],
             "copy_plain_bindings": [
-                f"<{ctrl_key}-{alt_key}-c>",
-                f"<{ctrl_key}-{alt_key}-C>",
+                f"<{ctrl_key}-Insert>",
             ],
             "cut_bindings": [
                 f"<{ctrl_key}-x>",
@@ -330,6 +317,7 @@ def new_sheet_options() -> DotDict:
             "set_cell_sizes_on_zoom": False,
             "auto_resize_columns": None,
             "auto_resize_rows": None,
+            "to_clipboard_dialect": csv.excel_tab,
             "to_clipboard_delimiter": "\t",
             "to_clipboard_quotechar": '"',
             "to_clipboard_lineterminator": "\n",
