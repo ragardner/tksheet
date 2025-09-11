@@ -2,6 +2,9 @@
 #### Addressed:
 - [#313](https://github.com/ragardner/tksheet/issues/313).
 
+#### Improved:
+- For ease of use only, added type hinting to function `set_options()`.
+
 ### Version 7.5.14
 #### Removed:
 - Removed settings for cut_contents, copy_contents and the new plain equivalent added in `7.5.13`. These settings now use the same as the usual cut and copy settings.

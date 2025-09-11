@@ -12,7 +12,7 @@ from operator import attrgetter
 from re import IGNORECASE, escape, sub
 from timeit import default_timer
 from tkinter import ttk
-from typing import Any, Literal
+from typing import Any, Literal, Unpack
 
 from .column_headers import ColumnHeaders
 from .constants import (
@@ -78,7 +78,7 @@ from .other_classes import (
     Span,
 )
 from .row_index import RowIndex
-from .sheet_options import new_sheet_options
+from .sheet_options import SetOptions, new_sheet_options
 from .sorting import fast_sort_key, natural_sort_key, version_sort_key  # noqa: F401
 from .themes import (
     theme_black,
@@ -4162,7 +4162,7 @@ class Sheet(tk.Frame):
 
     # Sheet Options and Other Functions
 
-    def set_options(self, redraw: bool = True, **kwargs) -> Sheet:
+    def set_options(self, redraw: bool = True, **kwargs: Unpack[SetOptions]) -> Sheet:
         enabled = tuple(self.MT.enabled_bindings)
         for k, v in kwargs.items():
             if k in self.ops and v != self.ops[k]:
