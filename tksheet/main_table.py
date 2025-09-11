@@ -5783,7 +5783,6 @@ class MainTable(tk.Canvas):
         has_dd: bool,
         tags: str | tuple[str],
     ) -> tuple[str, bool]:
-        redrawn = False
         if (datarn, datacn) in self.progress_bars:
             kwargs = self.progress_bars[(datarn, datacn)]
         else:
@@ -5816,7 +5815,7 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5843,7 +5842,7 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5870,7 +5869,7 @@ class MainTable(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5895,7 +5894,7 @@ class MainTable(tk.Canvas):
                 txtfg = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
                 if high_bg:  # Only draw if fill exists
                     if not isinstance(kwargs, ProgressBar):
-                        redrawn = self.redraw_highlight(
+                        self.redraw_highlight(
                             x1=fc + 1,
                             y1=fr + 1,
                             x2=sc,
@@ -5910,7 +5909,7 @@ class MainTable(tk.Canvas):
                         if kwargs.del_when_done and kwargs.percent >= 100:
                             del self.progress_bars[(datarn, datacn)]
                         else:
-                            redrawn = self.redraw_highlight(
+                            self.redraw_highlight(
                                 x1=fc + 1,
                                 y1=fr + 1,
                                 x2=sc,
@@ -5925,7 +5924,7 @@ class MainTable(tk.Canvas):
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
                 txtfg = self.PAR.ops.table_selected_cells_fg
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5938,7 +5937,7 @@ class MainTable(tk.Canvas):
                 )
             elif "rows" in selections and r in selections["rows"]:
                 txtfg = self.PAR.ops.table_selected_rows_fg
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5951,7 +5950,7 @@ class MainTable(tk.Canvas):
                 )
             elif "columns" in selections and c in selections["columns"]:
                 txtfg = self.PAR.ops.table_selected_columns_fg
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5964,7 +5963,7 @@ class MainTable(tk.Canvas):
                 )
             else:
                 txtfg = self.PAR.ops.table_fg
-                redrawn = self.redraw_highlight(
+                self.redraw_highlight(
                     x1=fc + 1,
                     y1=fr + 1,
                     x2=sc,
@@ -5975,7 +5974,7 @@ class MainTable(tk.Canvas):
                     can_width=None,
                     pc=None,
                 )
-        return txtfg, redrawn
+        return txtfg
 
     def redraw_highlight(
         self,
@@ -5989,6 +5988,10 @@ class MainTable(tk.Canvas):
         can_width: None | float = None,
         pc: None | float = None,
     ) -> bool:
+        if not self.PAR.ops.show_horizontal_grid:
+            y2 += 1
+        if not self.PAR.ops.show_vertical_grid:
+            x2 += 1
         if not is_type_int(pc) or pc >= 100:
             coords = (
                 x1 - 1 if outline else x1,
@@ -6332,7 +6335,7 @@ class MainTable(tk.Canvas):
                 disp_loc = (r, c)
                 loc = (datarn, datacn)
                 tag = f"{r}_{c}"
-                fill, _ = self.redraw_highlight_get_text_fg(
+                fill = self.redraw_highlight_get_text_fg(
                     r=r,
                     c=c,
                     fc=cleftgridln,

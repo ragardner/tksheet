@@ -1380,16 +1380,17 @@ class ColumnHeaders(tk.Canvas):
         outline: str,
         tags: str | tuple[str],
     ) -> bool:
-        coords = (x1, y1, x2, y2)
+        if not self.ops.show_vertical_grid:
+            x2 += 1
         if self.hidd_high:
             iid, showing = self.hidd_high.popitem()
-            self.coords(iid, coords)
+            self.coords(iid, x1, y1, x2, y2)
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline, tags=tags)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, state="normal", tags=tags)
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags=tags)
+            iid = self.create_rectangle(x1, y1, x2, y2, fill=fill, outline=outline, tags=tags)
         self.disp_high[iid] = True
         return True
 
