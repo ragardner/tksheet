@@ -1,3 +1,7 @@
+### Version 7.5.16
+#### Fixed:
+- Due to importing `Unpack` from `typing` which is not available in `Python 3.8` the library would not load. This issue was introduced in `tksheet 7.5.15`.
+
 ### Version 7.5.15
 #### Addressed:
 - [#313](https://github.com/ragardner/tksheet/issues/313).
