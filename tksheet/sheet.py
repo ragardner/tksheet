@@ -5077,20 +5077,11 @@ class Sheet(tk.Frame):
         """
         Finds the index of an item amongst it's siblings in the
         treeview.
-
-        'safety' is only necessary when the internal row number dict
-        is not able to provide row numbers, e.g. when modifying the
-        tree and before the action is complete.
-
-        When 'True' the fn uses list.index() instead.
         """
         if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        elif par := self.RI.iid_parent(item):
-            if not safety:
-                return self.RI.rns[item] - self.RI.rns[par] - 1
-            else:
-                return self.RI.parent_node(item).children.index(item)
+        elif self.RI.iid_parent(item):
+            return self.RI.parent_node(item).children.index(item)
         else:
             return next(index for index, iid in enumerate(self.get_children("")) if iid == item)
 
