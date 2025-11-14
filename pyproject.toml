@@ -6,22 +6,23 @@ build-backend = "setuptools.build_meta"
 name = "tksheet"
 description = "Tkinter table / sheet and treeview widget"
 readme = "README.md"
-version = "7.5.17"
+version = "7.5.18"
 authors = [{ name = "ragardner", email = "github@ragardner.simplelogin.com" }]
 requires-python = ">=3.8"
-license = {file = "LICENSE.txt"}
+license = "MIT"
+license-files = ["LICENSE.txt"]
 keywords = ["tkinter", "table", "widget", "tree", "treeview", "sheet", "grid", "tk"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 [project.urls]
@@ -33,6 +34,8 @@ Funding = "https://github.com/ragardner"
 
 [tool.ruff]
 line-length = 120
-extend-select = ["I", "F", "C4", "E", "B", "SIM"]
 fix = true
+
+[tool.ruff.lint]
+extend-select = ["I", "F", "C4", "E", "B", "SIM"]
 ignore = ["SIM401"]

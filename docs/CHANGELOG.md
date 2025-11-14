@@ -1,3 +1,7 @@
+### Version 7.5.18
+#### Added:
+- Python 3.14 support in .toml classifiers.
+
 ### Version 7.5.17
 #### Fixed:
 - Potential bug in treeview function `index()` and treeview functions that rely on it. Resort to slower but safer logic.
