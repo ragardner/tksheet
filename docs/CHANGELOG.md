@@ -1,3 +1,8 @@
+### Version 7.5.19
+#### Addressed:
+- Issue where non-hashable values are used with data formatting and `nullable=True`. [#314](https://github.com/ragardner/tksheet/issues/314).
+    - Addressed by automatically treating non-hashable values as NOT nonelike.
+
 ### Version 7.5.18
 #### Added:
 - Python 3.14 support in .toml classifiers.

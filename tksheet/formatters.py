@@ -8,7 +8,13 @@ from .constants import falsy, nonelike, truthy
 
 
 def is_none_like(o: Any) -> bool:
-    return (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike
+    if isinstance(o, str):
+        normalized = o.lower().replace(" ", "")
+        return normalized in nonelike or o in nonelike
+    try:
+        return o in nonelike
+    except TypeError:
+        return False
 
 
 def to_int(o: Any, **kwargs) -> int:
