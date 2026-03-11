@@ -1,3 +1,7 @@
+### Version 7.6.0
+#### Changed:
+- Copying cells to clipboard which are `None` now copies an empty string `""`, previously copied `"None"` to clipboard.
+
 ### Version 7.5.19
 #### Addressed:
 - Issue where non-hashable values are used with data formatting and `nullable=True`. [#314](https://github.com/ragardner/tksheet/issues/314).

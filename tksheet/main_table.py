@@ -8323,7 +8323,7 @@ class MainTable(tk.Canvas):
                 # assumed given formatter class has get_clipboard_data() function
                 # and it returns one of above type hints
                 return value.get_clipboard_data()
-        return f"{value}"
+        return "" if value is None else value if isinstance(value, str) else f"{value}"
 
     def get_cell_kwargs(
         self,
