@@ -408,6 +408,7 @@
 <li><a href="#natural_sort_key">natural_sort_key</a></li>
 <li><a href="#version_sort_key">version_sort_key</a></li>
 <li><a href="#fast_sort_key">fast_sort_key</a></li>
+<li><a href="#date_sort_key">date_sort_key</a></li>
 <li><a href="#setting-the-default-sorting-key">Setting the default sorting key</a></li>
 <li><a href="#sorting-cells">Sorting cells</a></li>
 <li><a href="#sorting-row-values">Sorting row values</a></li>
@@ -4365,6 +4366,7 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <ul>
 <li>Won't sort string version numbers.</li>
 <li>Will convert strings to floats.</li>
+<li>Will try to convert strings to floats before it tries to convert them to dates.</li>
 <li>Will sort strings that are file paths.</li>
 </ul>
 <p>Order:</p>
@@ -4412,6 +4414,28 @@ set_redo_stack(stack: deque) -&gt; Sheet
 <li>int, float</li>
 <li>datetime</li>
 <li>strings (including paths as POSIX strings) &amp; unknown objects with <strong>str</strong></li>
+<li>unknown objects</li>
+</ul>
+<h4 id="date_sort_key"><strong>date_sort_key</strong></h4>
+<p>A key for sorting with an emphasis on dates over numbers. This used to be <code>natural_sort_key</code> in tksheet versions prior to <code>7.6.0</code>.</p>
+<ul>
+<li>Won't sort string version numbers</li>
+<li>Will try to convert strings to dates before it tries floats<ul>
+<li>This may result in errors in integer date edge cases</li>
+</ul>
+</li>
+<li>Will convert strings to floats</li>
+<li>
+<p>Will sort strings that are file paths</p>
+</li>
+<li>
+<p>None</p>
+</li>
+<li>Empty strings</li>
+<li>bool</li>
+<li>int, float (inc. strings that are numbers)</li>
+<li>datetime (inc. strings that are dates)</li>
+<li>strings (including string file paths and paths as POSIX strings) &amp; unknown objects with <strong>str</strong></li>
 <li>unknown objects</li>
 </ul>
 <h4 id="setting-the-default-sorting-key"><strong>Setting the default sorting key</strong></h4>

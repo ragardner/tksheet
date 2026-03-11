@@ -3976,6 +3976,7 @@ This is the **default** sorting key for natural sorting of various Python types:
 
 - Won't sort string version numbers.
 - Will convert strings to floats.
+- Will try to convert strings to floats before it tries to convert them to dates.
 - Will sort strings that are file paths.
 
 Order:
@@ -4019,6 +4020,24 @@ A faster key for natural sorting of various Python types. This key should probab
 3. int, float
 4. datetime
 5. strings (including paths as POSIX strings) & unknown objects with __str__
+6. unknown objects
+
+#### **date_sort_key**
+
+A key for sorting with an emphasis on dates over numbers. This used to be `natural_sort_key` in tksheet versions prior to `7.6.0`.
+
+- Won't sort string version numbers
+- Will try to convert strings to dates before it tries floats
+    - This may result in errors in integer date edge cases
+- Will convert strings to floats
+- Will sort strings that are file paths
+
+0. None
+1. Empty strings
+2. bool
+3. int, float (inc. strings that are numbers)
+4. datetime (inc. strings that are dates)
+5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
 6. unknown objects
 
 #### **Setting the default sorting key**

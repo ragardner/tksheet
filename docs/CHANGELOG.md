@@ -1,6 +1,13 @@
 ### Version 7.6.0
+#### Fixed:
+- `natural_sort_key` improperly treating some integers as dates, leading to incorrect sorting of numbers.
+
 #### Changed:
 - Copying cells to clipboard which are `None` now copies an empty string `""`, previously copied `"None"` to clipboard.
+- `natural_sort_key` no longer sorts strings that are integer style dates, e.g. `"20251030"` use `date_sort_key` for those.
+
+#### Added:
+- `date_sort_key` to emulate previous behavior of `natural_sort_key` where for strings, a date conversion is attempted before a float and integer style dates are handled. This may cause errors in some edge cases though [#316](https://github.com/ragardner/tksheet/issues/316).
 
 ### Version 7.5.19
 #### Addressed:

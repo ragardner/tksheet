@@ -155,6 +155,85 @@ def natural_sort_key(item: Any) -> tuple[int, ...]:
     1. Empty strings
     2. bool
     3. int, float (inc. strings that are numbers)
+    4. datetime (inc. strings that are dates, except for pure integer dates)
+    5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
+    6. unknown objects
+    """
+    if isinstance(item, str):
+        if item:
+            try:
+                return (3, float(item))
+            except ValueError:
+                for date_format in date_formats:
+                    try:
+                        return (4, datetime.strptime(item, date_format).timestamp())
+                    except ValueError:
+                        continue
+            # the same as _string_fallback
+            components = split(r"[/\\]", item)
+            if components[-1]:
+                return (
+                    5,
+                    len(components),
+                    tuple(
+                        int(e) if e.isdigit() else e.lower()
+                        for comp in components[:-1]
+                        for e in split(r"(\d+)", comp)
+                        if e
+                    ),
+                    tuple(int(e) if e.isdigit() else e.lower() for e in split(r"(\d+)", components[-1])),
+                )
+            else:
+                return (
+                    5,
+                    len(components),
+                    tuple(
+                        int(e) if e.isdigit() else e.lower()
+                        for comp in components[:-1]
+                        for e in split(r"(\d+)", comp)
+                        if e
+                    ),
+                    (),
+                )
+        else:
+            return (1, item)
+
+    elif item is None:
+        return (0,)
+
+    elif isinstance(item, bool):
+        return (2, item)
+
+    elif isinstance(item, (int, float)):
+        return (3, item)
+
+    elif isinstance(item, datetime):
+        return (4, item.timestamp())
+
+    elif isinstance(item, Path):
+        return _string_fallback(item.as_posix())
+
+    else:
+        try:
+            return _string_fallback(f"{item}")
+        except Exception:
+            return (6, item)
+
+
+def date_sort_key(item: Any) -> tuple[int, ...]:
+    """
+    A key for sorting with an emphasis on dates over numbers.
+
+    - Won't sort string version numbers
+    - Will try to convert strings to dates before it tries floats
+        - This may result in errors in integer date edge cases
+    - Will convert strings to floats
+    - Will sort strings that are file paths
+
+    0. None
+    1. Empty strings
+    2. bool
+    3. int, float (inc. strings that are numbers)
     4. datetime (inc. strings that are dates)
     5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
     6. unknown objects
@@ -166,7 +245,6 @@ def natural_sort_key(item: Any) -> tuple[int, ...]:
                     return (4, datetime.strptime(item, date_format).timestamp())
                 except ValueError:
                     continue
-
             try:
                 return (3, float(item))
             except ValueError:
@@ -423,7 +501,7 @@ def sort_tree_rows_by_column(
         return [], {}
 
     if key is None:
-        key = natural_sort_key  # Assuming natural_sort_key is defined elsewhere
+        key = natural_sort_key
 
     # Define the sort_reverse parameter to avoid unnecessary reversals
     sort_reverse = not reverse
